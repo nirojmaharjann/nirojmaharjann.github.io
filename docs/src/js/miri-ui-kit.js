@@ -70,8 +70,10 @@ $(document).ready(function () {
         hideVideo($(this).parents('.lightbox'));
     })
 
-    $('.lightbox').click(function() {
-        hideVideo($(this));
+    $('.lightbox').on('click', function (e) {
+        if ($(e.target).is('.lightbox')) {
+            hideVideo($(this));
+        }
     })
 });
 
