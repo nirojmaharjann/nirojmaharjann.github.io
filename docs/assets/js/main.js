@@ -13,6 +13,12 @@
       'mdi-nodejs', 'mdi-language-python', 'mdi-language-go',
       'mdi-language-javascript'
     ];
+    /* brand colors, one per icon above */
+    var FLOAT_COLORS = [
+      '#FF9900', '#2496ED', '#FCC624', '#326CE5',
+      '#7B42BC', '#EE0000', '#F05032', '#FC6D26',
+      '#83CD29', '#FFD43B', '#00ADD8', '#F7DF1E'
+    ];
     var FLOATER_COUNT = 16;
     var floaters = document.createElement('div');
     floaters.className = 'bg-floaters';
@@ -21,6 +27,7 @@
       var fSpan = document.createElement('span');
       var fIcon = document.createElement('i');
       fIcon.className = 'mdi ' + FLOAT_ICONS[fi % FLOAT_ICONS.length];
+      fSpan.style.setProperty('--c', FLOAT_COLORS[fi % FLOAT_COLORS.length]);
       fSpan.style.setProperty('--x', (Math.random() * 96 + 2).toFixed(2) + '%');
       fSpan.style.setProperty('--s', Math.round(Math.random() * 40 + 22) + 'px');
       fSpan.style.setProperty('--d', (Math.random() * 30 + 28).toFixed(1) + 's');
