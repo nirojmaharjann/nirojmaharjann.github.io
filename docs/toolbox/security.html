@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DevOps Toolbox — Niroj Maharjan</title>
+    <title>Security Tools — moved — DevOps Toolbox</title>
     <meta name="description" content="Redirecting to the DevOps Toolbox.">
     <script>
         // Apply saved/system theme before CSS paints (prevents flash)
@@ -24,13 +24,11 @@
     <link rel="stylesheet" href="../src/vendors/@mdi/font/css/materialdesignicons.min.css">
 
     <!-- Portfolio styles -->
-    <link rel="stylesheet" href="../assets/css/portfolio.css?v=20260824.4">
+    <link rel="stylesheet" href="../assets/css/portfolio.css?v=20260824.5">
 </head>
 <body>
 
-    <!-- Sticky header: nav + AD/BS clock stay pinned while scrolling -->
     <header class="site-head">
-
         <nav class="nav">
             <div class="container nav-inner">
                 <a class="logo" href="../index.html"><span class="tilde">~/$</span> niroj.maharjan</a>
@@ -38,7 +36,7 @@
                     <li><a href="../index.html#about"><span class="idx">01.</span>about</a></li>
                     <li><a href="../index.html#skills"><span class="idx">02.</span>skills</a></li>
                     <li><a href="../index.html#projects"><span class="idx">03.</span>projects</a></li>
-                    <li><a href="../toolbox/index.html"><span class="idx">04.</span>toolbox</a></li>
+                    <li><a href="index.html"><span class="idx">04.</span>toolbox</a></li>
                     <li><a href="../blog/index.html"><span class="idx">05.</span>blog</a></li>
                     <li><a href="../index.html#contact"><span class="idx">06.</span>contact</a></li>
                 </ul>
@@ -58,32 +56,22 @@
             </div>
         </div>
     </header>
-
-    <!-- ================= Redirect stub ================= -->
-    <section class="section">
-        <div class="container" style="text-align:center; padding:90px 0 60px">
-            <p class="section-tag"><span class="accent">#</span> moved</p>
-            <h1 class="section-title">tools &rarr; toolbox<span class="cursor-block">&nbsp;</span></h1>
-            <p style="color:var(--muted); max-width:52ch; margin:0 auto 30px">
-                The utilities grew up and became a full DevOps toolbox &mdash;
-                taking you there now&hellip;
-            </p>
-            <a class="btn btn-primary" href="../toolbox/index.html">Open the Toolbox
-                <i class="mdi mdi-arrow-right"></i></a>
-            <script>
-                (function () {
-                    try {
-                        var hash = window.location.hash;
-                        setTimeout(function () {
-                            window.location.replace('../toolbox/index.html' + (hash || ''));
-                        }, 1500);
-                    } catch (e) {}
-                })();
-            </script>
-        </div>
-    </section>
-
-    <!-- ================= Footer ================= -->
+<section class="section">
+    <div class="container" style="text-align:center; padding:90px 0 60px">
+        <p class="section-tag"><span class="accent">#</span> moved</p>
+        <h1 class="section-title">Security &rarr; toolbox<span class="cursor-block">&nbsp;</span></h1>
+        <p style="color:var(--muted); max-width:52ch; margin:0 auto 30px">
+            The Security tools now live on their own pages in the toolbox dashboard.
+        </p>
+        <a class="btn btn-primary" href="index.html#security">Open Security tools
+            <i class="mdi mdi-arrow-right"></i></a>
+        <script>
+            (function () {
+                setTimeout(function () { window.location.replace('index.html#security'); }, 800);
+            })();
+        </script>
+    </div>
+</section>
     <footer class="footer">
         <div class="container footer-inner">
             <span>&copy; <span id="year">2025</span> niroj.maharjan</span>
@@ -96,7 +84,7 @@
         </div>
     </footer>
 
-    <script src="../assets/js/nepali-date.js?v=20260824.4"></script>
-    <script src="../assets/js/main.js?v=20260824.4"></script>
+    <script src="../assets/js/nepali-date.js?v=20260824.5"></script>
+    <script src="../assets/js/main.js?v=20260824.5"></script>
 </body>
 </html>

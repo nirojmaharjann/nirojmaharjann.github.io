@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Regex tester — DevOps Toolbox</title>
+    <meta name="description" content="Live match highlighting, capture groups and flag toggles.">
+    <script>
+        // Apply saved/system theme before CSS paints (prevents flash)
+        (function () { try {
+            var t = localStorage.getItem('theme') ||
+                (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+            document.documentElement.setAttribute('data-theme', t);
+        } catch (e) {} })();
+    </script>
+    <link rel="shortcut icon" href="../assets/images/favicon.ico" type="image/x-icon">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+
+    <!-- Icons -->
+    <link rel="stylesheet" href="../src/vendors/@mdi/font/css/materialdesignicons.min.css">
+
+    <!-- Portfolio styles -->
+    <link rel="stylesheet" href="../assets/css/portfolio.css?v=20260824.5">
+</head>
+<body>
+
+    <header class="site-head">
+        <nav class="nav">
+            <div class="container nav-inner">
+                <a class="logo" href="../index.html"><span class="tilde">~/$</span> niroj.maharjan</a>
+                <ul class="nav-links">
+                    <li><a href="../index.html#about"><span class="idx">01.</span>about</a></li>
+                    <li><a href="../index.html#skills"><span class="idx">02.</span>skills</a></li>
+                    <li><a href="../index.html#projects"><span class="idx">03.</span>projects</a></li>
+                    <li><a href="index.html"><span class="idx">04.</span>toolbox</a></li>
+                    <li><a href="../blog/index.html"><span class="idx">05.</span>blog</a></li>
+                    <li><a href="../index.html#contact"><span class="idx">06.</span>contact</a></li>
+                </ul>
+                <div class="nav-actions">
+                    <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme"></button>
+                    <button class="burger" aria-label="Toggle navigation">&#8801;</button>
+                </div>
+            </div>
+        </nav>
+        <div class="clock-strip">
+            <div class="container clock-inner">
+                <span><i class="mdi mdi-calendar-range"></i> <span id="ad-date">&mdash;</span></span>
+                <span class="sep">|</span>
+                <span><i class="mdi mdi-calendar-text"></i> <span id="bs-date">&mdash;</span></span>
+                <span class="sep">|</span>
+                <span><i class="mdi mdi-clock-outline"></i> <span id="np-time">&mdash;</span></span>
+            </div>
+        </div>
+    </header>
+<p class="crumb"><a href="index.html">toolbox</a><span class="sep">/</span><a href="index.html#utilities">Utilities</a><span class="sep">/</span><span class="here">regex tester</span></p>
+<div class="tb-head">
+    <h1 class="tb-title"><i class="mdi mdi-regex"></i> Regex tester<span class="cursor-block">&nbsp;</span></h1>
+    <p class="tb-sub">Live match highlighting, capture groups and flag toggles.</p>
+</div>
+
+<div class="tool-layout">
+    <div class="tool-main">
+<article class="tool-sec reveal" id="regex_tester">
+<div class="field">
+                    <label for="re-pattern">Pattern</label>
+                    <input type="text" id="re-pattern" value="" spellcheck="false" placeholder="\d+\.\d+\.\d+">
+                </div>
+                <div class="field" style="margin-top:12px">
+                    <label for="re-text">Test text</label>
+                    <textarea class="code-in" id="re-text" spellcheck="false" rows="4"
+                              placeholder="Paste sample text&hellip;"></textarea>
+                </div>
+                <div class="chips">
+                    <button type="button" class="chip on" data-flag="g">g global</button>
+                    <button type="button" class="chip on" data-flag="i">i case-insensitive</button>
+                    <button type="button" class="chip" data-flag="m">m multiline</button>
+                    <button type="button" class="chip" data-flag="s">s dotall</button>
+                    <button type="button" class="chip" data-flag="u">u unicode</button>
+                </div>
+                <p class="err" id="re-error" hidden></p>
+                <pre class="code-out" id="re-out">// matches appear here</pre>
+            
+</article>
+<aside class="about-box reveal">
+    <h2><i class="mdi mdi-information-outline"></i> about this tool</h2>
+    <p>Executes your pattern against sample text with live results: match positions, line numbers and capture groups rendered per row. Flags g/i/m/s/u toggle on click.</p><p>A runaway guard caps matches at 500 so catastrophic patterns can&rsquo;t hang the tab.</p>
+    <p class="about-tags"><span class="badge">regex</span> <span class="badge">regexp</span> <span class="badge">pattern</span> <span class="badge">match</span></p>
+</aside>
+<nav class="pager"><a class="prev" href="base64-url-codec.html"><i class="mdi mdi-arrow-left"></i> Base64 / URL codec</a><a class="next" href="timestamp-converter.html">Timestamp converter <i class="mdi mdi-arrow-right"></i></a></nav>
+    </div>
+<details class="rail-collapse"><summary><i class="mdi mdi-compass-outline"></i> all toolbox tools (37)</summary><ul><li><a href="dockerfile-generator.html">🐳 Dockerfile generator</a></li><li><a href="compose-generator.html">🐳 Compose file generator</a></li><li><a href="run-command-builder.html">🐳 docker run command builder</a></li><li><a href="image-tag-tool.html">🐳 Image tag &amp; reference tool</a></li><li><a href="dockerfile-linter.html">🐳 Dockerfile linter</a></li><li><a href="docker-troubleshooter.html">🐳 Push / pull troubleshooter</a></li><li><a href="manifest-validator.html">☸️ Manifest validator</a></li><li><a href="deployment-generator.html">☸️ Deployment generator</a></li><li><a href="resource-calculator.html">☸️ Resource calculator</a></li><li><a href="kubectl-builder.html">☸️ kubectl command builder</a></li><li><a href="yaml-json-converter.html">☸️ YAML &harr; JSON converter</a></li><li><a href="k8s-troubleshooter.html">☸️ Troubleshooter playbook</a></li><li><a href="iam-policy-generator.html">☁️ IAM policy validator / generator</a></li><li><a href="arn-parser-builder.html">☁️ ARN builder &amp; parser</a></li><li><a href="cloudinit-generator.html">☁️ cloud-init user-data generator</a></li><li><a href="github-actions-generator.html">🔄 GitHub Actions generator</a></li><li><a href="gitlab-ci-generator.html">🔄 GitLab CI generator</a></li><li><a href="cron-expression-builder.html">🔄 Cron expression builder</a></li><li><a href="semver-checker.html">🔄 SemVer checker</a></li><li><a href="dns-lookup.html">🌐 DNS lookup</a></li><li><a href="url-parser.html">🌐 URL parser</a></li><li><a href="ip-calculator.html">🌐 IP / CIDR calculator</a></li><li><a href="port-lookup.html">🌐 Port reference</a></li><li><a href="ssl-checker.html">🌐 SSL / TLS checker</a></li><li><a href="curl-builder.html">🌐 cURL command builder</a></li><li><a href="http-status-explorer.html">🌐 HTTP status explorer</a></li><li><a href="password-generator.html">🔐 Password generator</a></li><li><a href="secret-scanner.html">🔐 Secret scanner</a></li><li><a href="jwt-decoder.html">🔐 JWT decoder</a></li><li><a href="hash-generator.html">🔐 Hash generator</a></li><li><a href="json-formatter.html">🧰 JSON formatter</a></li><li><a href="yaml-formatter.html">🧰 YAML formatter</a></li><li><a href="base64-url-codec.html">🧰 Base64 / URL codec</a></li><li><a href="regex-tester.html">🧰 Regex tester</a></li><li><a href="timestamp-converter.html">🧰 Timestamp converter</a></li><li><a href="uuid-generator.html">🧰 UUID generator</a></li><li><a href="ad-bs-date-converter.html">🧰 AD &harr; BS date converter</a></li></ul></details>
+<nav class="rail" aria-label="Toolbox categories">
+<p class="mono-label">toolbox index</p>
+<div class="rail-group">
+<h4><i class="mdi mdi-docker"></i> Docker</h4>
+<ul>
+<li><a href="dockerfile-generator.html">Dockerfile generator</a></li>
+<li><a href="compose-generator.html">Compose file generator</a></li>
+<li><a href="run-command-builder.html">docker run command builder</a></li>
+<li><a href="image-tag-tool.html">Image tag &amp; reference tool</a></li>
+<li><a href="dockerfile-linter.html">Dockerfile linter</a></li>
+<li><a href="docker-troubleshooter.html">Push / pull troubleshooter</a></li>
+</ul></div>
+<div class="rail-group">
+<h4><i class="mdi mdi-kubernetes"></i> Kubernetes</h4>
+<ul>
+<li><a href="manifest-validator.html">Manifest validator</a></li>
+<li><a href="deployment-generator.html">Deployment generator</a></li>
+<li><a href="resource-calculator.html">Resource calculator</a></li>
+<li><a href="kubectl-builder.html">kubectl command builder</a></li>
+<li><a href="yaml-json-converter.html">YAML &harr; JSON converter</a></li>
+<li><a href="k8s-troubleshooter.html">Troubleshooter playbook</a></li>
+</ul></div>
+<div class="rail-group">
+<h4><i class="mdi mdi-cloud-outline"></i> Cloud / AWS</h4>
+<ul>
+<li><a href="iam-policy-generator.html">IAM policy validator / generator</a></li>
+<li><a href="arn-parser-builder.html">ARN builder &amp; parser</a></li>
+<li><a href="cloudinit-generator.html">cloud-init user-data generator</a></li>
+</ul></div>
+<div class="rail-group">
+<h4><i class="mdi mdi-source-branch"></i> CI / CD</h4>
+<ul>
+<li><a href="github-actions-generator.html">GitHub Actions generator</a></li>
+<li><a href="gitlab-ci-generator.html">GitLab CI generator</a></li>
+<li><a href="cron-expression-builder.html">Cron expression builder</a></li>
+<li><a href="semver-checker.html">SemVer checker</a></li>
+</ul></div>
+<div class="rail-group">
+<h4><i class="mdi mdi-server-network"></i> Networking</h4>
+<ul>
+<li><a href="dns-lookup.html">DNS lookup</a></li>
+<li><a href="url-parser.html">URL parser</a></li>
+<li><a href="ip-calculator.html">IP / CIDR calculator</a></li>
+<li><a href="port-lookup.html">Port reference</a></li>
+<li><a href="ssl-checker.html">SSL / TLS checker</a></li>
+<li><a href="curl-builder.html">cURL command builder</a></li>
+<li><a href="http-status-explorer.html">HTTP status explorer</a></li>
+</ul></div>
+<div class="rail-group">
+<h4><i class="mdi mdi-shield-lock-outline"></i> Security</h4>
+<ul>
+<li><a href="password-generator.html">Password generator</a></li>
+<li><a href="secret-scanner.html">Secret scanner</a></li>
+<li><a href="jwt-decoder.html">JWT decoder</a></li>
+<li><a href="hash-generator.html">Hash generator</a></li>
+</ul></div>
+<div class="rail-group">
+<h4><i class="mdi mdi-tools"></i> Utilities</h4>
+<ul>
+<li><a href="json-formatter.html">JSON formatter</a></li>
+<li><a href="yaml-formatter.html">YAML formatter</a></li>
+<li><a href="base64-url-codec.html">Base64 / URL codec</a></li>
+<li><a class="active" href="regex-tester.html">Regex tester</a></li>
+<li><a href="timestamp-converter.html">Timestamp converter</a></li>
+<li><a href="uuid-generator.html">UUID generator</a></li>
+<li><a href="ad-bs-date-converter.html">AD &harr; BS date converter</a></li>
+</ul></div>
+</nav>
+</div>
+    <footer class="footer">
+        <div class="container footer-inner">
+            <span>&copy; <span id="year">2025</span> niroj.maharjan</span>
+            <div class="socials">
+                <a href="https://github.com/nirojmaharjann" target="_blank" rel="noopener" aria-label="GitHub"><i class="mdi mdi-github-circle"></i></a>
+                <!-- TODO: replace email placeholder with your real address -->
+                <a href="mailto:your-email@example.com" aria-label="Email"><i class="mdi mdi-email"></i></a>
+            </div>
+            <span class="built">built with <span class="accent">&lt;/&gt;</span> and too much coffee</span>
+        </div>
+    </footer>
+
+    <script src="../assets/js/tb-lib.js?v=20260824.5"></script>
+    <script src="../assets/js/tb-utils.js?v=20260824.5"></script>
+    <script src="../assets/js/nepali-date.js?v=20260824.5"></script>
+    <script src="../assets/js/main.js?v=20260824.5"></script>
+</body>
+</html>

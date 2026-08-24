@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DevOps Toolbox — Niroj Maharjan</title>
+    <meta name="description" content="A professional DevOps toolbox: 37 hands-on tools across Docker, Kubernetes, cloud, CI/CD, networking, security and everyday utilities — all running locally in your browser.">
+    <script>
+        // Apply saved/system theme before CSS paints (prevents flash)
+        (function () { try {
+            var t = localStorage.getItem('theme') ||
+                (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+            document.documentElement.setAttribute('data-theme', t);
+        } catch (e) {} })();
+    </script>
+    <link rel="shortcut icon" href="../assets/images/favicon.ico" type="image/x-icon">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+
+    <!-- Icons -->
+    <link rel="stylesheet" href="../src/vendors/@mdi/font/css/materialdesignicons.min.css">
+
+    <!-- Portfolio styles -->
+    <link rel="stylesheet" href="../assets/css/portfolio.css?v=20260824.5">
+</head>
+<body>
+
+    <header class="site-head">
+        <nav class="nav">
+            <div class="container nav-inner">
+                <a class="logo" href="../index.html"><span class="tilde">~/$</span> niroj.maharjan</a>
+                <ul class="nav-links">
+                    <li><a href="../index.html#about"><span class="idx">01.</span>about</a></li>
+                    <li><a href="../index.html#skills"><span class="idx">02.</span>skills</a></li>
+                    <li><a href="../index.html#projects"><span class="idx">03.</span>projects</a></li>
+                    <li><a href="index.html"><span class="idx">04.</span>toolbox</a></li>
+                    <li><a href="../blog/index.html"><span class="idx">05.</span>blog</a></li>
+                    <li><a href="../index.html#contact"><span class="idx">06.</span>contact</a></li>
+                </ul>
+                <div class="nav-actions">
+                    <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme"></button>
+                    <button class="burger" aria-label="Toggle navigation">&#8801;</button>
+                </div>
+            </div>
+        </nav>
+        <div class="clock-strip">
+            <div class="container clock-inner">
+                <span><i class="mdi mdi-calendar-range"></i> <span id="ad-date">&mdash;</span></span>
+                <span class="sep">|</span>
+                <span><i class="mdi mdi-calendar-text"></i> <span id="bs-date">&mdash;</span></span>
+                <span class="sep">|</span>
+                <span><i class="mdi mdi-clock-outline"></i> <span id="np-time">&mdash;</span></span>
+            </div>
+        </div>
+    </header>
+<section class="section">
+<div class="container">
+    <p class="section-tag"><span class="accent">#</span> 04 &mdash; devops toolbox</p>
+    <h1 class="section-title">devops_toolbox<span class="cursor-block">&nbsp;</span></h1>
+    <p style="color:var(--muted); max-width:62ch">Practical utilities for developers, DevOps engineers, cloud engineers and SREs &mdash;
+    generators, validators and calculators that run entirely in your browser.</p>
+<p class="hub-api-note"><i class="mdi mdi-information-outline"></i> two tools call public read-only APIs (DNS-over-HTTPS, SSL Labs) &mdash; clearly labelled on their pages; every other tool is fully client-side.</p>
+    <div class="hub-toolbar">
+        <div class="search-box grow">
+            <i class="mdi mdi-magnify"></i>
+            <input type="text" id="tb-search" placeholder="Search tools&hellip; try &lsquo;yaml&rsquo;, &lsquo;cron&rsquo;, &lsquo;subnet&rsquo;"
+                   spellcheck="false" autocomplete="off" aria-label="Search tools">
+        </div>
+    </div>
+    <div class="filter-chips"><button type="button" class="chip on fchip" data-fcat="all">all</button>
+    <button type="button" class="chip fchip" data-fcat="docker">🐳 Docker</button>
+    <button type="button" class="chip fchip" data-fcat="kubernetes">☸️ Kubernetes</button>
+    <button type="button" class="chip fchip" data-fcat="cloud">☁️ Cloud / AWS</button>
+    <button type="button" class="chip fchip" data-fcat="cicd">🔄 CI / CD</button>
+    <button type="button" class="chip fchip" data-fcat="networking">🌐 Networking</button>
+    <button type="button" class="chip fchip" data-fcat="security">🔐 Security</button>
+    <button type="button" class="chip fchip" data-fcat="utilities">🧰 Utilities</button></div>
+
+<section class="cat-section" data-cat="docker" id="docker">
+    <header class="cat-head">
+        <h2><span class="cat-emoji">🐳</span> Docker <span class="cat-count">6 tools</span></h2>
+        <p>Container builds, compose stacks and registry debugging.</p>
+    </header>
+    <div class="cards-grid">
+<a class="tool-card" href="dockerfile-generator.html" data-cat="docker" data-search="dockerfile generator dockerfile image build multistage node python go java nginx docker"><i class="mdi mdi-file-code-outline card-icon" aria-hidden="true"></i><h3>Dockerfile generator</h3><p>Opinionated starter Dockerfiles: pinned bases, layer caching, non-root, healthchecks.</p><span class="card-foot"><span class="card-cat">🐳 Docker</span><span class="card-open">open tool <i class="mdi mdi-arrow-right"></i></span></span></a>
+<a class="tool-card" href="compose-generator.html" data-cat="docker" data-search="compose file generator compose docker-compose stack services yaml volumes docker"><i class="mdi mdi-lan-connect card-icon" aria-hidden="true"></i><h3>Compose file generator</h3><p>Build multi-service stacks interactively and export a valid compose.yaml.</p><span class="card-foot"><span class="card-cat">🐳 Docker</span><span class="card-open">open tool <i class="mdi mdi-arrow-right"></i></span></span></a>
+<a class="tool-card" href="run-command-builder.html" data-cat="docker" data-search="docker run command builder run flags ports volume environment restart network docker"><i class="mdi mdi-console-line card-icon" aria-hidden="true"></i><h3>docker run command builder</h3><p>Assemble docker run lines from flags: ports, mounts, env, restart policy.</p><span class="card-foot"><span class="card-cat">🐳 Docker</span><span class="card-open">open tool <i class="mdi mdi-arrow-right"></i></span></span></a>
+<a class="tool-card" href="image-tag-tool.html" data-cat="docker" data-search="image tag   reference tool registry tag digest ghcr ecr naming latest docker"><i class="mdi mdi-tag-multiple-outline card-icon" aria-hidden="true"></i><h3>Image tag &amp; reference tool</h3><p>Split or assemble registry/image references and sanity-check tags.</p><span class="card-foot"><span class="card-cat">🐳 Docker</span><span class="card-open">open tool <i class="mdi mdi-arrow-right"></i></span></span></a>
+<a class="tool-card" href="dockerfile-linter.html" data-cat="docker" data-search="dockerfile linter lint hadolint best-practices pin cache secret docker"><i class="mdi mdi-check-decagram-outline card-icon" aria-hidden="true"></i><h3>Dockerfile linter</h3><p>hadolint-style static checks: pinning, layer hygiene, root user, secrets.</p><span class="card-foot"><span class="card-cat">🐳 Docker</span><span class="card-open">open tool <i class="mdi mdi-arrow-right"></i></span></span></a>
+<a class="tool-card" href="docker-troubleshooter.html" data-cat="docker" data-search="push / pull troubleshooter troubleshoot denied manifest exit port prune cache debug docker"><i class="mdi mdi-lifebuoy card-icon" aria-hidden="true"></i><h3>Push / pull troubleshooter</h3><p>Registry failures decoded: denied, manifest unknown, exits, ports, disk, cache.</p><span class="card-foot"><span class="card-cat">🐳 Docker</span><span class="card-open">open tool <i class="mdi mdi-arrow-right"></i></span></span></a>
+    </div>
+</section>
+<section class="cat-section" data-cat="kubernetes" id="kubernetes">
+    <header class="cat-head">
+        <h2><span class="cat-emoji">☸️</span> Kubernetes <span class="cat-count">6 tools</span></h2>
+        <p>Orchestration utilities: validate, generate, convert, debug.</p>
+    </header>
+    <div class="cards-grid">
+<a class="tool-card" href="manifest-validator.html" data-cat="kubernetes" data-search="manifest validator validate lint yaml selector matchlabels dry-run schema kubernetes"><i class="mdi mdi-check-decagram-outline card-icon" aria-hidden="true"></i><h3>Manifest validator</h3><p>Structural lint of Deployments, Pods and Services before you apply them.</p><span class="card-foot"><span class="card-cat">☸️ Kubernetes</span><span class="card-open">open tool <i class="mdi mdi-arrow-right"></i></span></span></a>
+<a class="tool-card" href="deployment-generator.html" data-cat="kubernetes" data-search="deployment generator deployment service yaml probes resources rolling-update security-context kubernetes"><i class="mdi mdi-file-cog-outline card-icon" aria-hidden="true"></i><h3>Deployment generator</h3><p>Sane-default Deployment + Service manifests: probes, limits, rolling updates.</p><span class="card-foot"><span class="card-cat">☸️ Kubernetes</span><span class="card-open">open tool <i class="mdi mdi-arrow-right"></i></span></span></a>
+<a class="tool-card" href="resource-calculator.html" data-cat="kubernetes" data-search="resource calculator cpu memory mi gi millicores capacity requests limits kubernetes"><i class="mdi mdi-calculator-variant-outline card-icon" aria-hidden="true"></i><h3>Resource calculator</h3><p>Multiply pod requests by replicas; convert CPU and memory units safely.</p><span class="card-foot"><span class="card-cat">☸️ Kubernetes</span><span class="card-open">open tool <i class="mdi mdi-arrow-right"></i></span></span></a>
+<a class="tool-card" href="kubectl-builder.html" data-cat="kubernetes" data-search="kubectl command builder kubectl cli get logs describe exec scale apply kubernetes"><i class="mdi mdi-console-line card-icon" aria-hidden="true"></i><h3>kubectl command builder</h3><p>Compose exact kubectl commands: verbs, resources, namespaces, output flags.</p><span class="card-foot"><span class="card-cat">☸️ Kubernetes</span><span class="card-open">open tool <i class="mdi mdi-arrow-right"></i></span></span></a>
+<a class="tool-card" href="yaml-json-converter.html" data-cat="kubernetes" data-search="yaml   json converter yaml json convert configmap parse serialize kubernetes"><i class="mdi mdi-swap-horizontal card-icon" aria-hidden="true"></i><h3>YAML &harr; JSON converter</h3><p>Round-trip config snippets between YAML and JSON without leaving the tab.</p><span class="card-foot"><span class="card-cat">☸️ Kubernetes</span><span class="card-open">open tool <i class="mdi mdi-arrow-right"></i></span></span></a>
+<a class="tool-card" href="k8s-troubleshooter.html" data-cat="kubernetes" data-search="troubleshooter playbook crashloopbackoff imagepullbackoff pending oomkilled rbac debug events kubernetes"><i class="mdi mdi-lifebuoy card-icon" aria-hidden="true"></i><h3>Troubleshooter playbook</h3><p>CrashLoops, ImagePull errors, Pending pods and friends &mdash; with diagnostics.</p><span class="card-foot"><span class="card-cat">☸️ Kubernetes</span><span class="card-open">open tool <i class="mdi mdi-arrow-right"></i></span></span></a>
+    </div>
+</section>
+<section class="cat-section" data-cat="cloud" id="cloud">
+    <header class="cat-head">
+        <h2><span class="cat-emoji">☁️</span> Cloud / AWS <span class="cat-count">3 tools</span></h2>
+        <p>IAM policies, ARNs and cloud-init, computed locally.</p>
+    </header>
+    <div class="cards-grid">
+<a class="tool-card" href="iam-policy-generator.html" data-cat="cloud" data-search="iam policy validator / generator iam policy aws s3 least-privilege json statement cloud / aws"><i class="mdi mdi-shield-account-outline card-icon" aria-hidden="true"></i><h3>IAM policy validator / generator</h3><p>Least-privilege IAM policy documents with ARN validation built in.</p><span class="card-foot"><span class="card-cat">☁️ Cloud / AWS</span><span class="card-open">open tool <i class="mdi mdi-arrow-right"></i></span></span></a>
+<a class="tool-card" href="arn-parser-builder.html" data-cat="cloud" data-search="arn builder   parser arn aws resource partition region account s3 iam cloud / aws"><i class="mdi mdi-identifier card-icon" aria-hidden="true"></i><h3>ARN builder &amp; parser</h3><p>Decode arn:partition:service:region:account:resource strings, or assemble them.</p><span class="card-foot"><span class="card-cat">☁️ Cloud / AWS</span><span class="card-open">open tool <i class="mdi mdi-arrow-right"></i></span></span></a>
+<a class="tool-card" href="cloudinit-generator.html" data-cat="cloud" data-search="cloud-init user-data generator cloud-init ec2 userdata ssh packages runcmd bootstrap cloud / aws"><i class="mdi mdi-cloud-upload-outline card-icon" aria-hidden="true"></i><h3>cloud-init user-data generator</h3><p>NoCloud user-data: hostname, packages, SSH keys, runcmd &mdash; valid YAML.</p><span class="card-foot"><span class="card-cat">☁️ Cloud / AWS</span><span class="card-open">open tool <i class="mdi mdi-arrow-right"></i></span></span></a>
+    </div>
+</section>
+<section class="cat-section" data-cat="cicd" id="cicd">
+    <header class="cat-head">
+        <h2><span class="cat-emoji">🔄</span> CI / CD <span class="cat-count">4 tools</span></h2>
+        <p>Pipeline skeletons and schedule math that keep delivery boring.</p>
+    </header>
+    <div class="cards-grid">
+<a class="tool-card" href="github-actions-generator.html" data-cat="cicd" data-search="github actions generator github actions workflow ci node python go docker push ci / cd"><i class="mdi mdi-github-circle card-icon" aria-hidden="true"></i><h3>GitHub Actions generator</h3><p>Starter workflows with caching and least-privilege permissions baked in.</p><span class="card-foot"><span class="card-cat">🔄 CI / CD</span><span class="card-open">open tool <i class="mdi mdi-arrow-right"></i></span></span></a>
+<a class="tool-card" href="gitlab-ci-generator.html" data-cat="cicd" data-search="gitlab ci generator gitlab ci pipeline stages runner docker rules ci / cd"><i class="mdi mdi-gitlab card-icon" aria-hidden="true"></i><h3>GitLab CI generator</h3><p>Starter .gitlab-ci.yml: stages, caching, rules and registry jobs.</p><span class="card-foot"><span class="card-cat">🔄 CI / CD</span><span class="card-open">open tool <i class="mdi mdi-arrow-right"></i></span></span></a>
+<a class="tool-card" href="cron-expression-builder.html" data-cat="cicd" data-search="cron expression builder cron schedule crontab timer pipeline nightly ci / cd"><i class="mdi mdi-clock-edit-outline card-icon" aria-hidden="true"></i><h3>Cron expression builder</h3><p>Five-field cron with next-run preview in your local timezone.</p><span class="card-foot"><span class="card-cat">🔄 CI / CD</span><span class="card-open">open tool <i class="mdi mdi-arrow-right"></i></span></span></a>
+<a class="tool-card" href="semver-checker.html" data-cat="cicd" data-search="semver checker semver version compare prerelease release major minor patch ci / cd"><i class="mdi mdi-tag-outline card-icon" aria-hidden="true"></i><h3>SemVer checker</h3><p>Validate versions against semver.org and compare two releases.</p><span class="card-foot"><span class="card-cat">🔄 CI / CD</span><span class="card-open">open tool <i class="mdi mdi-arrow-right"></i></span></span></a>
+    </div>
+</section>
+<section class="cat-section" data-cat="networking" id="networking">
+    <header class="cat-head">
+        <h2><span class="cat-emoji">🌐</span> Networking <span class="cat-count">7 tools</span></h2>
+        <p>DNS, TLS, ports, IPs and HTTP semantics on hand.</p>
+    </header>
+    <div class="cards-grid">
+<a class="tool-card" href="dns-lookup.html" data-cat="networking" data-search="dns lookup dns a aaaa mx txt ns cname doh propagation networking"><i class="mdi mdi-dns-outline card-icon" aria-hidden="true"></i><h3>DNS lookup</h3><p>Query A, AAAA, MX, TXT, NS, CNAME records via DNS-over-HTTPS.</p><span class="card-foot"><span class="card-cat">🌐 Networking</span><span class="card-open">open tool <i class="mdi mdi-arrow-right"></i></span></span></a>
+<a class="tool-card" href="url-parser.html" data-cat="networking" data-search="url parser url uri query params host port percent-encoding networking"><i class="mdi mdi-link-variant card-icon" aria-hidden="true"></i><h3>URL parser</h3><p>Split any URL into protocol, host, port, path and query parameters.</p><span class="card-foot"><span class="card-cat">🌐 Networking</span><span class="card-open">open tool <i class="mdi mdi-arrow-right"></i></span></span></a>
+<a class="tool-card" href="ip-calculator.html" data-cat="networking" data-search="ip / cidr calculator cidr subnet netmask ip range broadcast vlsm split networking"><i class="mdi mdi-ip-network-outline card-icon" aria-hidden="true"></i><h3>IP / CIDR calculator</h3><p>Subnet math: masks, ranges, broadcast, usable hosts and child splits.</p><span class="card-foot"><span class="card-cat">🌐 Networking</span><span class="card-open">open tool <i class="mdi mdi-arrow-right"></i></span></span></a>
+<a class="tool-card" href="port-lookup.html" data-cat="networking" data-search="port reference ports tcp udp 80 443 22 5432 service networking"><i class="mdi mdi-ethernet card-icon" aria-hidden="true"></i><h3>Port reference</h3><p>Well-known ports with service names and transport, filterable.</p><span class="card-foot"><span class="card-cat">🌐 Networking</span><span class="card-open">open tool <i class="mdi mdi-arrow-right"></i></span></span></a>
+<a class="tool-card" href="ssl-checker.html" data-cat="networking" data-search="ssl / tls checker ssl tls certificate grade https handshake ssllabs networking"><i class="mdi mdi-lock-check-outline card-icon" aria-hidden="true"></i><h3>SSL / TLS checker</h3><p>Live certificate grade and handshake report via SSL Labs.</p><span class="card-foot"><span class="card-cat">🌐 Networking</span><span class="card-open">open tool <i class="mdi mdi-arrow-right"></i></span></span></a>
+<a class="tool-card" href="curl-builder.html" data-cat="networking" data-search="curl command builder curl http request post headers api debug networking"><i class="mdi mdi-console card-icon" aria-hidden="true"></i><h3>cURL command builder</h3><p>Method, headers, body and flags assembled into a copyable curl command.</p><span class="card-foot"><span class="card-cat">🌐 Networking</span><span class="card-open">open tool <i class="mdi mdi-arrow-right"></i></span></span></a>
+<a class="tool-card" href="http-status-explorer.html" data-cat="networking" data-search="http status explorer http status 404 500 429 301 redirect error codes networking"><i class="mdi mdi-signal-cellular-3 card-icon" aria-hidden="true"></i><h3>HTTP status explorer</h3><p>Every status code that matters, grouped, filtered and explained.</p><span class="card-foot"><span class="card-cat">🌐 Networking</span><span class="card-open">open tool <i class="mdi mdi-arrow-right"></i></span></span></a>
+    </div>
+</section>
+<section class="cat-section" data-cat="security" id="security">
+    <header class="cat-head">
+        <h2><span class="cat-emoji">🔐</span> Security <span class="cat-count">4 tools</span></h2>
+        <p>Secrets hygiene, tokens, hashes and strong credentials.</p>
+    </header>
+    <div class="cards-grid">
+<a class="tool-card" href="password-generator.html" data-cat="security" data-search="password generator password random entropy crypto generator passphrase security"><i class="mdi mdi-key-variant card-icon" aria-hidden="true"></i><h3>Password generator</h3><p>Cryptographically random passwords with entropy readout &mdash; offline.</p><span class="card-foot"><span class="card-cat">🔐 Security</span><span class="card-open">open tool <i class="mdi mdi-arrow-right"></i></span></span></a>
+<a class="tool-card" href="secret-scanner.html" data-cat="security" data-search="secret scanner secrets scan aws github token private key entropy leak security"><i class="mdi mdi-magnify-scan card-icon" aria-hidden="true"></i><h3>Secret scanner</h3><p>Find AWS keys, tokens, private keys and leaked creds in pasted text.</p><span class="card-foot"><span class="card-cat">🔐 Security</span><span class="card-open">open tool <i class="mdi mdi-arrow-right"></i></span></span></a>
+<a class="tool-card" href="jwt-decoder.html" data-cat="security" data-search="jwt decoder jwt token decode claims exp bearer auth security"><i class="mdi mdi-card-account-details-outline card-icon" aria-hidden="true"></i><h3>JWT decoder</h3><p>Decode header/payload claims and flag expiry &mdash; signature unverified.</p><span class="card-foot"><span class="card-cat">🔐 Security</span><span class="card-open">open tool <i class="mdi mdi-arrow-right"></i></span></span></a>
+<a class="tool-card" href="hash-generator.html" data-cat="security" data-search="hash generator hash sha256 sha512 checksum digest webcrypto security"><i class="mdi mdi-one-up card-icon" aria-hidden="true"></i><h3>Hash generator</h3><p>SHA-1/256/384/512 digests via the Web Crypto API, unicode-safe.</p><span class="card-foot"><span class="card-cat">🔐 Security</span><span class="card-open">open tool <i class="mdi mdi-arrow-right"></i></span></span></a>
+    </div>
+</section>
+<section class="cat-section" data-cat="utilities" id="utilities">
+    <header class="cat-head">
+        <h2><span class="cat-emoji">🧰</span> Utilities <span class="cat-count">7 tools</span></h2>
+        <p>Everyday converters, formatters and testers.</p>
+    </header>
+    <div class="cards-grid">
+<a class="tool-card" href="json-formatter.html" data-cat="utilities" data-search="json formatter json format minify sort pretty lint utilities"><i class="mdi mdi-code-json card-icon" aria-hidden="true"></i><h3>JSON formatter</h3><p>Pretty-print, minify or deep-sort JSON with error positions.</p><span class="card-foot"><span class="card-cat">🧰 Utilities</span><span class="card-open">open tool <i class="mdi mdi-arrow-right"></i></span></span></a>
+<a class="tool-card" href="yaml-formatter.html" data-cat="utilities" data-search="yaml formatter yaml format normalize sort indent clean utilities"><i class="mdi mdi-format-align-left card-icon" aria-hidden="true"></i><h3>YAML formatter</h3><p>Re-indent, normalise and deep-sort YAML via the toolbox YAML engine.</p><span class="card-foot"><span class="card-cat">🧰 Utilities</span><span class="card-open">open tool <i class="mdi mdi-arrow-right"></i></span></span></a>
+<a class="tool-card" href="base64-url-codec.html" data-cat="utilities" data-search="base64 / url codec base64 encode decode url percent unicode atob utilities"><i class="mdi mdi-swap-horizontal-circle-outline card-icon" aria-hidden="true"></i><h3>Base64 / URL codec</h3><p>Unicode-safe Base64 and percent encoders/decoders.</p><span class="card-foot"><span class="card-cat">🧰 Utilities</span><span class="card-open">open tool <i class="mdi mdi-arrow-right"></i></span></span></a>
+<a class="tool-card" href="regex-tester.html" data-cat="utilities" data-search="regex tester regex regexp pattern match groups test grep utilities"><i class="mdi mdi-regex card-icon" aria-hidden="true"></i><h3>Regex tester</h3><p>Live match highlighting, capture groups and flag toggles.</p><span class="card-foot"><span class="card-cat">🧰 Utilities</span><span class="card-open">open tool <i class="mdi mdi-arrow-right"></i></span></span></a>
+<a class="tool-card" href="timestamp-converter.html" data-cat="utilities" data-search="timestamp converter unix epoch timestamp iso 8601 utc date time utilities"><i class="mdi mdi-clock-digital card-icon" aria-hidden="true"></i><h3>Timestamp converter</h3><p>Unix seconds/millis &harr; ISO 8601 and local time, with relative labels.</p><span class="card-foot"><span class="card-cat">🧰 Utilities</span><span class="card-open">open tool <i class="mdi mdi-arrow-right"></i></span></span></a>
+<a class="tool-card" href="uuid-generator.html" data-cat="utilities" data-search="uuid generator uuid guid v4 random id rfc4122 utilities"><i class="mdi mdi-identifier card-icon" aria-hidden="true"></i><h3>UUID generator</h3><p>RFC 4122 v4 UUIDs from crypto.getRandomValues, batch-generatable.</p><span class="card-foot"><span class="card-cat">🧰 Utilities</span><span class="card-open">open tool <i class="mdi mdi-arrow-right"></i></span></span></a>
+<a class="tool-card" href="ad-bs-date-converter.html" data-cat="utilities" data-search="ad   bs date converter nepali date bikram sambat bs ad calendar devanagari utilities"><i class="mdi mdi-calendar-clock card-icon" aria-hidden="true"></i><h3>AD &harr; BS date converter</h3><p>Gregorian &harr; Bikram Sambath conversion for 2000&ndash;2100 BS.</p><span class="card-foot"><span class="card-cat">🧰 Utilities</span><span class="card-open">open tool <i class="mdi mdi-arrow-right"></i></span></span></a>
+    </div>
+</section>
+    <p class="empty-state" id="no-results" hidden>
+        <i class="mdi mdi-magnify-close"></i>
+        no tools matched &mdash; try another keyword or clear the filter
+    </p>
+</div>
+</section>
+    <footer class="footer">
+        <div class="container footer-inner">
+            <span>&copy; <span id="year">2025</span> niroj.maharjan</span>
+            <div class="socials">
+                <a href="https://github.com/nirojmaharjann" target="_blank" rel="noopener" aria-label="GitHub"><i class="mdi mdi-github-circle"></i></a>
+                <!-- TODO: replace email placeholder with your real address -->
+                <a href="mailto:your-email@example.com" aria-label="Email"><i class="mdi mdi-email"></i></a>
+            </div>
+            <span class="built">built with <span class="accent">&lt;/&gt;</span> and too much coffee</span>
+        </div>
+    </footer>
+
+    <script src="../assets/js/tb-lib.js?v=20260824.5"></script>
+    <script src="../assets/js/tb-hub.js?v=20260824.5"></script>
+    <script src="../assets/js/nepali-date.js?v=20260824.5"></script>
+    <script src="../assets/js/main.js?v=20260824.5"></script>
+</body>
+</html>
