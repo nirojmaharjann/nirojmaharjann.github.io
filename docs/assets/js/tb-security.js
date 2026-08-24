@@ -262,36 +262,164 @@
 
 
   /* ============================================================
-     5. Hash generator (WebCrypto SHA family)
-     ============================================================ */
+   5. Hash generator (MD5 + WebCrypto SHA family)
+   ============================================================ */
   (function () {
     if (!$('ha-in')) return;
 
-  function toHex(buf) {
-    return Array.prototype.map.call(new Uint8Array(buf), function (b) {
-      return ('0' + b.toString(16)).slice(-2);
-    }).join('');
-  }
+    var HA_LABEL = { md5: 'MD5', sha1: 'SHA-1', sha256: 'SHA-256', sha384: 'SHA-384', sha512: 'SHA-512' };
+    var haAlg = 'sha256';
 
-  var haTimer = null;
-  $('ha-in').addEventListener('input', function () {
-    clearTimeout(haTimer);
-    haTimer = setTimeout(hashIt, 250);
-  });
+    function toHex(buf) {
+      return Array.prototype.map.call(new Uint8Array(buf), function (b) {
+        return ('0' + b.toString(16)).slice(-2);
+      }).join('');
+    }
 
-  function hashIt() {
-    var text = $('ha-in').value;
-    var algos = ['SHA-1', 'SHA-256', 'SHA-384', 'SHA-512'];
-    if (!text) { $('ha-kv').innerHTML = ''; return; }
-    var data = new TextEncoder().encode(text);
-    Promise.all(algos.map(function (a) {
-      return crypto.subtle.digest(a, data).then(function (d) { return [a, toHex(d)]; });
-    })).then(function (rows) {
-      TB.fillKv($('ha-kv'), rows.map(function (r) { return [r[0].toLowerCase(), r[1]]; }));
-    }).catch(function () {
-      TB.fillKv($('ha-kv'), [['error', 'WebCrypto unavailable (needs HTTPS or localhost)']]);
+    /* ---- pure-JS MD5 (WebCrypto does not provide it) ---- */
+    var ha_add = function (a, b) { return (a + b) & 0xFFFFFFFF; };
+    function ha_cmn(q, a, b, x, s, t) {
+      a = ha_add(ha_add(a, q), ha_add(x, t));
+      return ha_add((a << s) | (a >>> (32 - s)), b);
+    }
+    function ha_ff(a, b, c, d, x, s, t) { return ha_cmn((b & c) | (~b & d), a, b, x, s, t); }
+    function ha_gg(a, b, c, d, x, s, t) { return ha_cmn((b & d) | (c & ~d), a, b, x, s, t); }
+    function ha_hh(a, b, c, d, x, s, t) { return ha_cmn(b ^ c ^ d, a, b, x, s, t); }
+    function ha_ii(a, b, c, d, x, s, t) { return ha_cmn(c ^ (b | ~d), a, b, x, s, t); }
+
+    function md5cycle(x, k) {
+      var a = x[0], b = x[1], c = x[2], d = x[3];
+      a = ha_ff(a,b,c,d,k[0],7,-680876936); d = ha_ff(d,a,b,c,k[1],12,-389564586);
+      c = ha_ff(c,d,a,b,k[2],17,606105819); b = ha_ff(b,c,d,a,k[3],22,-1044525330);
+      a = ha_ff(a,b,c,d,k[4],7,-176418897); d = ha_ff(d,a,b,c,k[5],12,1200080426);
+      c = ha_ff(c,d,a,b,k[6],17,-1473231341); b = ha_ff(b,c,d,a,k[7],22,-45705983);
+      a = ha_ff(a,b,c,d,k[8],7,1770035416); d = ha_ff(d,a,b,c,k[9],12,-1958414417);
+      c = ha_ff(c,d,a,b,k[10],17,-42063); b = ha_ff(b,c,d,a,k[11],22,-1990404162);
+      a = ha_ff(a,b,c,d,k[12],7,1804603682); d = ha_ff(d,a,b,c,k[13],12,-40341101);
+      c = ha_ff(c,d,a,b,k[14],17,-1502002290); b = ha_ff(b,c,d,a,k[15],22,1236535329);
+
+      a = ha_gg(a,b,c,d,k[1],5,-165796510); d = ha_gg(d,a,b,c,k[6],9,-1069501632);
+      c = ha_gg(c,d,a,b,k[11],14,643717713); b = ha_gg(b,c,d,a,k[0],20,-373897302);
+      a = ha_gg(a,b,c,d,k[5],5,-701558691); d = ha_gg(d,a,b,c,k[10],9,38016083);
+      c = ha_gg(c,d,a,b,k[15],14,-660478335); b = ha_gg(b,c,d,a,k[4],20,-405537848);
+      a = ha_gg(a,b,c,d,k[9],5,568446438); d = ha_gg(d,a,b,c,k[14],9,-1019803690);
+      c = ha_gg(c,d,a,b,k[3],14,-187363961); b = ha_gg(b,c,d,a,k[8],20,1163531501);
+      a = ha_gg(a,b,c,d,k[13],5,-1444681467); d = ha_gg(d,a,b,c,k[2],9,-51403784);
+      c = ha_gg(c,d,a,b,k[7],14,1735328473); b = ha_gg(b,c,d,a,k[12],20,-1926607734);
+
+      a = ha_hh(a,b,c,d,k[5],4,-378558); d = ha_hh(d,a,b,c,k[8],11,-2022574463);
+      c = ha_hh(c,d,a,b,k[11],16,1839030562); b = ha_hh(b,c,d,a,k[14],23,-35309556);
+      a = ha_hh(a,b,c,d,k[1],4,-1530992060); d = ha_hh(d,a,b,c,k[4],11,1272893353);
+      c = ha_hh(c,d,a,b,k[7],16,-155497632); b = ha_hh(b,c,d,a,k[10],23,-1094730640);
+      a = ha_hh(a,b,c,d,k[13],4,681279174); d = ha_hh(d,a,b,c,k[0],11,-358537222);
+      c = ha_hh(c,d,a,b,k[3],16,-722521979); b = ha_hh(b,c,d,a,k[6],23,76029189);
+      a = ha_hh(a,b,c,d,k[9],4,-640364487); d = ha_hh(d,a,b,c,k[12],11,-421815835);
+      c = ha_hh(c,d,a,b,k[15],16,530742520); b = ha_hh(b,c,d,a,k[2],23,-995338651);
+
+      a = ha_ii(a,b,c,d,k[0],6,-198630844); d = ha_ii(d,a,b,c,k[7],10,1126891415);
+      c = ha_ii(c,d,a,b,k[14],15,-1416354905); b = ha_ii(b,c,d,a,k[5],21,-57434055);
+      a = ha_ii(a,b,c,d,k[12],6,1700485571); d = ha_ii(d,a,b,c,k[3],10,-1894986606);
+      c = ha_ii(c,d,a,b,k[10],15,-1051523); b = ha_ii(b,c,d,a,k[1],21,-2054922799);
+      a = ha_ii(a,b,c,d,k[8],6,1873313359); d = ha_ii(d,a,b,c,k[15],10,-30611744);
+      c = ha_ii(c,d,a,b,k[6],15,-1560198380); b = ha_ii(b,c,d,a,k[13],21,1309151649);
+      a = ha_ii(a,b,c,d,k[4],6,-145523070); d = ha_ii(d,a,b,c,k[11],10,-1120210379);
+      c = ha_ii(c,d,a,b,k[2],15,718787259); b = ha_ii(b,c,d,a,k[9],21,-343485551);
+
+      x[0] = ha_add(a, x[0]); x[1] = ha_add(b, x[1]);
+      x[2] = ha_add(c, x[2]); x[3] = ha_add(d, x[3]);
+    }
+
+    function md5blk(str) {
+      var blks = [], i;
+      for (i = 0; i < 16; i++) {
+        var j = i * 4;
+        blks[i] = str.charCodeAt(j) + (str.charCodeAt(j + 1) << 8) +
+                  (str.charCodeAt(j + 2) << 16) + (str.charCodeAt(j + 3) << 24);
+      }
+      return blks;
+    }
+
+    function md5hex(text) {
+      /* utf-8 bytes as a binary string so charCodeAt reads raw bytes */
+      var bytes = unescape(encodeURIComponent(text));
+      var n = bytes.length;
+      var state = [1732584193, -271733879, -1732584194, 271733878];
+      var i;
+      for (i = 64; i <= n; i += 64) {
+        md5cycle(state, md5blk(bytes.substring(i - 64, i)));
+      }
+      var rest = bytes.substring(i - 64);
+      var tail = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+      for (i = 0; i < rest.length; i++) tail[i >> 2] |= rest.charCodeAt(i) << ((i % 4) << 3);
+      tail[i >> 2] |= 0x80 << ((i % 4) << 3);
+      if (i > 55) { md5cycle(state, tail); tail = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]; }
+      /* bit length little-endian, low word only (inputs < 512 MB) */
+      tail[14] = n * 8;
+      md5cycle(state, tail);
+      var out = '';
+      for (i = 0; i < 4; i++) {
+        out += ('0' + ((state[i] >>> 0) & 0xFF).toString(16)).slice(-2) +
+               ('0' + (((state[i] >>> 0) >> 8) & 0xFF).toString(16)).slice(-2) +
+               ('0' + (((state[i] >>> 0) >> 16) & 0xFF).toString(16)).slice(-2) +
+               ('0' + (((state[i] >>> 0) >> 24) & 0xFF).toString(16)).slice(-2);
+      }
+      return out;
+    }
+
+    function haShowErr(msg) {
+      $('ha-error').textContent = msg;
+      $('ha-error').hidden = false;
+      $('ha-out').textContent = '// hash appears here';
+    }
+
+    function haDone(hex) {
+      $('ha-error').hidden = true;
+      $('ha-out').textContent = hex;
+    }
+
+    function hashIt() {
+      var text = $('ha-in').value;
+      if (!text) {
+        haShowErr('Type or paste some text to hash first.');
+        return;
+      }
+      try {
+        if (haAlg === 'md5') { haDone(md5hex(text)); return; }
+        if (!(window.crypto && window.crypto.subtle)) {
+          haShowErr('WebCrypto is unavailable - SHA hashes need HTTPS or localhost. MD5 still works.');
+          return;
+        }
+        window.crypto.subtle.digest(HA_LABEL[haAlg], new TextEncoder().encode(text))
+          .then(function (d) { haDone(toHex(d)); })
+          .catch(function (e) { haShowErr('Hashing failed: ' + (e && e.message ? e.message : e)); });
+      } catch (e) {
+        haShowErr('Hashing failed: ' + (e && e.message ? e.message : e));
+      }
+    }
+
+    /* algorithm tabs - single source of truth, one active at a time */
+    $('ha-algos').addEventListener('click', function (ev) {
+      var btn = ev.target.closest('.tab');
+      if (!btn) return;
+      haAlg = btn.getAttribute('data-alg');
+      this.querySelectorAll('.tab').forEach(function (b) {
+        var on = b.getAttribute('data-alg') === haAlg;
+        b.classList.toggle('on', on);
+        b.setAttribute('aria-selected', on ? 'true' : 'false');
+      });
+      if ($('ha-in').value) hashIt();
     });
-  }
+
+    $('ha-go').addEventListener('click', hashIt);
+    $('ha-in').addEventListener('keydown', function (ev) {
+      if (ev.key === 'Enter' && !ev.shiftKey) { ev.preventDefault(); hashIt(); }
+    });
+
+    $('ha-reset').addEventListener('click', function () {
+      $('ha-in').value = '';
+      $('ha-error').hidden = true;
+      $('ha-out').textContent = '// hash appears here';
+    });
   })();
 
 })();

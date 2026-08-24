@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How to Install and Configure FreeRADIUS on Ubuntu — Niroj Maharjan</title>
+    <meta name="description" content="A practical guide to installing and configuring FreeRADIUS on Ubuntu: how RADIUS works, adding test users, registering network clients with shared secrets, radtest verification, debug mode, firewall ports 1812/1813 and troubleshooting common failures.">
+    <meta name="keywords" content="freeradius, radius server ubuntu, radtest, 802.1x, wpa2-enterprise, clients.conf, udp 1812, aaa authentication">
+    <link rel="shortcut icon" href="../assets/images/favicon.ico" type="image/x-icon">
+
+    <!-- Apply saved/system theme before CSS paints (prevents flash) -->
+    <script>
+        (function () { try {
+            var t = localStorage.getItem('theme') ||
+                (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+            document.documentElement.setAttribute('data-theme', t);
+        } catch (e) {} })();
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../src/vendors/@mdi/font/css/materialdesignicons.min.css">
+    <link rel="stylesheet" href="../assets/css/portfolio.css?v=20260824.11">
+</head>
+<body>
+
+    <header class="site-head">
+
+    <nav class="nav">
+        <div class="container nav-inner">
+            <a class="logo" href="../index.html"><span class="tilde">~/$</span> niroj.maharjan</a>
+            <ul class="nav-links">
+                <li><a href="../index.html#about"><span class="idx">01.</span>about</a></li>
+                <li><a href="../index.html#skills"><span class="idx">02.</span>skills</a></li>
+                <li><a href="../index.html#projects"><span class="idx">03.</span>projects</a></li>
+                <li><a href="../toolbox/index.html"><span class="idx">04.</span>toolbox</a></li>
+                <li><a href="../index.html"><span class="idx">05.</span>blog</a></li>
+                <li><a href="../index.html#contact"><span class="idx">06.</span>contact</a></li>
+            </ul>
+            <div class="nav-actions">
+                <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme"></button>
+                <button class="burger" aria-label="Toggle navigation">≡</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="clock-strip">
+        <div class="container clock-inner">
+            <span><i class="mdi mdi-calendar-range"></i> <span id="ad-date">&mdash;</span></span>
+            <span class="sep">|</span>
+            <span><i class="mdi mdi-calendar-text"></i> <span id="bs-date">&mdash;</span></span>
+            <span class="sep">|</span>
+            <span><i class="mdi mdi-clock-outline"></i> <span id="np-time">&mdash;</span></span>
+        </div>
+    </div>
+    </header>
+
+    <main class="post-wrap">
+        <header class="post-header">
+            <a class="back-link" href="index.html"><i class="mdi mdi-arrow-left"></i> cd ../blog</a>
+            <div class="post-meta" style="margin-top:18px"><span class="chip">Networking</span><span>Aug 24, 2026</span><span>&middot; 9 min read</span></div>
+            <h1>How to Install and Configure FreeRADIUS on Ubuntu</h1>
+        </header>
+
+        <article class="prose">
+            <p>When a Wi-Fi access point asks "may this laptop join?", or a VPN gateway asks "is this really
+            that user?", something has to hold the answer. That something is a RADIUS server &mdash; the
+            centralized Authentication, Authorization and Accounting brain of most enterprise networks.
+            FreeRADIUS is the open-source implementation of it, and this guide takes you from zero to a
+            working, tested setup on Ubuntu.</p>
+
+            <nav class="toc" aria-label="Table of contents">
+                <p class="toc-title"><i class="mdi mdi-format-list-numbered"></i> Contents</p>
+                <ol>
+                    <li><a href="#what-is-radius">What are RADIUS and FreeRADIUS?</a></li>
+                    <li><a href="#use-cases">Common use cases &amp; architecture</a></li>
+                    <li><a href="#install">Installation</a></li>
+                    <li><a href="#config-layout">Where the configuration lives</a></li>
+                    <li><a href="#test-user">Adding a test user</a></li>
+                    <li><a href="#client">Registering a RADIUS client (NAS)</a></li>
+                    <li><a href="#testing">Testing authentication</a></li>
+                    <li><a href="#ports-firewall">Ports and firewall rules</a></li>
+                    <li><a href="#aws-sg">If your server runs on AWS EC2</a></li>
+                    <li><a href="#troubleshooting">Troubleshooting</a></li>
+                    <li><a href="#security">Basic security considerations</a></li>
+                </ol>
+            </nav>
+
+            <h2 id="what-is-radius">What are RADIUS and FreeRADIUS?</h2>
+            <p><strong>RADIUS</strong> (Remote Authentication Dial-In User Service) is a protocol &mdash;
+            RFC 2865 &mdash; that lets network devices outsource login decisions to a central server. It covers
+            the classic AAA triad:</p>
+            <ul>
+                <li><strong>Authentication</strong> &mdash; who are you? (verify credentials)</li>
+                <li><strong>Authorization</strong> &mdash; what may you access? (VLAN, bandwidth policy&hellip;)</li>
+                <li><strong>Accounting</strong> &mdash; what did you do? (session logs, data usage)</li>
+            </ul>
+            <p><strong>FreeRADIUS</strong> is the mature, open-source RADIUS server &mdash; it ships in every
+            distro's repository and powers everything from university Wi-Fi to carrier-grade ISP backends.
+            It supports PAP, CHAP, MS-CHAPv2, EAP variants (PEAP, EAP-TTLS, EAP-TLS) and can authenticate against
+            flat files, SQL databases, LDAP directories or Active Directory.</p>
+
+            <h2 id="use-cases">Common use cases &amp; architecture</h2>
+            <ul>
+                <li><strong>WPA2/WPA3-Enterprise Wi-Fi</strong> &mdash; per-user credentials instead of one shared PSK</li>
+                <li><strong>VPN concentrators</strong> authenticating against central accounts</li>
+                <li><strong>Switch/router admin logins</strong> (802.1X / management access)</li>
+                <li><strong>Firewalls and gateways</strong> delegating user auth</li>
+            </ul>
+<pre><code>[laptop] --&gt; [Wi-Fi AP] --(UDP 1812/1813)--> [FreeRADIUS] --> [user store]
+   NAS = Network Access Server          the "brains"         files/SQL/LDAP</code></pre>
+            <p>The AP, switch or VPN box is called the <strong>NAS</strong> (Network Access Server) &mdash; it
+            forwards credentials to the RADIUS server and enforces the answer. The NAS and server share a
+            secret used to sign and encrypt the conversation.</p>
+
+            <h2 id="install">Installation</h2>
+<pre><code>sudo apt update
+sudo apt install -y freeradius freeradius-utils
+
+# confirm it is running
+sudo systemctl status freeradius
+
+# start now + on every boot
+sudo systemctl enable --now freeradius</code></pre>
+            <ul>
+                <li><code>freeradius</code> &mdash; the server daemon</li>
+                <li><code>freeradius-utils</code> &mdash; client-side tools including <code>radtest</code>, which we'll use for verification</li>
+                <li><code>systemctl status freeradius</code> should show <em>active (running)</em>; on a fresh install it's already listening on localhost only</li>
+            </ul>
+
+            <h2 id="config-layout">Where the configuration lives</h2>
+            <p>On current Ubuntu releases (22.04/24.04 packaging FreeRADIUS 3.x) everything sits under
+            <code>/etc/freeradius/3.0/</code>. Check yours with <code>freeradius -v</code>. The files that matter:</p>
+            <ul>
+                <li><code>radiusd.conf</code> &mdash; main server settings (ports, logging); rarely touched at first</li>
+                <li><code>mods-config/files/authorize</code> &mdash; the flat-file user database used by the default config</li>
+                <li><code>clients.conf</code> &mdash; which NAS devices may talk to this server, and their shared secrets</li>
+                <li><code>sites-enabled/default</code> &mdash; the authorization/authentication flow for port 1812</li>
+                <li><code>mods-enabled/</code> &mdash; modules like <code>eap</code>, <code>pap</code>, <code>sql</code>, <code>ldap</code></li>
+            </ul>
+            <div class="callout info">
+                <i class="mdi mdi-information-outline"></i>
+                <p><strong>Info.</strong> Paths differ slightly across versions (older setups use
+                <code>/etc/raddb/</code>, e.g. on RHEL-family systems). Verify with
+                <code>ls /etc/freeradius*</code> rather than assuming.</p>
+            </div>
+
+            <h2 id="test-user">Adding a test user</h2>
+            <p>The default configuration consults the <code>files</code> module first, so add a user there:</p>
+<pre><code>sudo nano /etc/freeradius/3.0/mods-config/files/authorize</code></pre>
+<pre><code># username    Cleartext-Password := "password"
+testuser      Cleartext-Password := "ChangeMe123!"
+
+# end of file</code></pre>
+            <ul>
+                <li><code>testuser</code> &mdash; the username the NAS will present</li>
+                <li><code>Cleartext-Password := "..."</code> &mdash; defines the password the server compares against. This is an <em>example</em> password for a lab only &mdash; never reuse real credentials here</li>
+                <li>The attribute comparison operator <code>:=</code> sets the value regardless of what the request contained</li>
+            </ul>
+            <p>The file must stay owned by the FreeRADIUS service user:</p>
+<pre><code>sudo chown root:freerad /etc/freeradius/3.0/mods-config/files/authorize
+sudo systemctl restart freeradius</code></pre>
+
+            <h2 id="client">Registering a RADIUS client (NAS)</h2>
+            <p>A RADIUS client is any device that asks the server to authenticate users &mdash; typically a Wi-Fi
+            access point, switch, VPN server or firewall. Each one must be registered with its source IP and a
+            <strong>shared secret</strong> both sides know:</p>
+<pre><code>sudo nano /etc/freeradius/3.0/clients.conf</code></pre>
+<pre><code>client my-ap {
+    ipaddr     = 192.168.1.50          # the NAS's IP - be specific!
+    secret     = CHANGE_ME_TO_A_STRONG_SECRET
+    nastype    = other                 # vendor hint: cisco, mikrotik, ...
+}</code></pre>
+            <p>The NAS will need four things configured on its side: the RADIUS <strong>server IP</strong>,
+            <strong>authentication port</strong> (1812), optionally the <strong>accounting port</strong> (1813),
+            and the identical <strong>shared secret</strong>.</p>
+            <div class="callout warn">
+                <i class="mdi mdi-alert"></i>
+                <p><strong>Warning.</strong> Never expose a production shared secret in tutorials, tickets or
+                screenshots. Generate a long random string per device &mdash; if a secret leaks, rotate it on the
+                server and the NAS together, since they must match exactly.</p>
+            </div>
+
+            <h2 id="testing">Testing authentication</h2>
+            <p>The cleanest way to watch the server think is debug mode. Stop the service, run the daemon in the
+            foreground, and read what happens per packet:</p>
+<pre><code>sudo systemctl stop freeradius
+sudo freeradius -X</code></pre>
+            <p><code>-X</code> is full debug output &mdash; every module decision is printed line by line. In a
+            second terminal, send a test request with <code>radtest</code>:</p>
+<pre><code>radtest testuser 'ChangeMe123!' 127.0.0.1 0 testing123</code></pre>
+            <ul>
+                <li>arguments: username, password, server IP, NAS port number (<code>0</code> = don't care), shared secret</li>
+                <li><code>testing123</code> is the default secret pre-configured for the localhost client in <code>clients.conf</code></li>
+            </ul>
+            <p><strong>SUCCESS looks like:</strong></p>
+<pre><code>Sent Access-Accept Id 123 from 127.0.0.1:1812 to 127.0.0.1:xxxxx length 20</code></pre>
+            <p><strong>FAILURE looks like:</strong></p>
+<pre><code>Sent Access-Reject ... (and freeradius -X prints exactly which check failed)</code></pre>
+            <p><code>Access-Accept</code> = authenticated; <code>Access-Reject</code> = wrong username, wrong
+            password, or the client isn't registered correctly. The <code>-X</code> output tells you which.</p>
+
+            <h2 id="ports-firewall">Ports and firewall rules</h2>
+            <ul>
+                <li><strong>UDP 1812</strong> &mdash; authentication requests/responses</li>
+                <li><strong>UDP 1813</strong> &mdash; accounting records</li>
+            </ul>
+            <p>(Older gear sometimes uses legacy ports 1645/1646.) Expose these only where RADIUS clients live:</p>
+<pre><code># allow UDP 1812+1813 from one trusted NAS subnet only
+sudo ufw allow from 192.168.1.0/24 to any port 1812 proto udp
+sudo ufw allow from 192.168.1.0/24 to any port 1813 proto udp
+sudo ufw enable</code></pre>
+            <div class="callout warn">
+                <i class="mdi mdi-alert"></i>
+                <p><strong>Warning.</strong> Review all rules BEFORE enabling UFW on a remote host &mdash; allow SSH
+                first or you will lock yourself out. And never open RADIUS ports to <code>anywhere</code>: the
+                internet does not need to ask your server for authentication.</p>
+            </div>
+
+            <h2 id="aws-sg">If your server runs on AWS EC2</h2>
+            <p>Create a dedicated security group and mirror the same principle &mdash; restrict by trusted CIDR,
+            not the world:</p>
+<pre><code>Type         Protocol   Port   Source
+Custom UDP   UDP        1812   10.0.1.0/24     # your NAS subnet / VPC CIDR
+Custom UDP   UDP        1813   10.0.1.0/24
+SSH          TCP        22     YOUR.IP.ADDR.ESS/32</code></pre>
+            <div class="callout warn">
+                <i class="mdi mdi-alert"></i>
+                <p><strong>Warning.</strong> Do NOT set RADIUS sources to <code>0.0.0.0/0</code>. Shared-secret
+                brute force and dictionary attacks against exposed RADIUS ports are automated and constant.
+                Restrict to the specific client IP ranges whenever possible.</p>
+            </div>
+
+            <h2 id="troubleshooting">Troubleshooting</h2>
+            <ul>
+                <li><strong>Service won't start</strong> &mdash; run <code>sudo freeradius -X</code> manually; a syntax error prints its exact file and line. Also check <code>journalctl -u freeradius -e</code>.</li>
+                <li><strong>Access-Reject with good password</strong> &mdash; the user entry isn't being read: verify filename/path for your version, restart after edits, and look in <code>-X</code> output for the <code>files</code> module matching your username.</li>
+                <li><strong>"Ignoring request from unknown client"</strong> &mdash; the NAS IP isn't in <code>clients.conf</code>, or doesn't match exactly (no wildcards unless explicitly enabled). Add the correct <code>ipaddr</code>.</li>
+                <li><strong>"Digest attributes... bad authenticator" / silent drop</strong> &mdash; almost always a shared-secret mismatch between NAS and <code>clients.conf</code>. Secrets are case-sensitive; retype on both ends.</li>
+                <li><strong>Works locally, fails from the NAS</strong> &mdash; firewall: UDP 1812/1813 blocked between them. Test with <code>sudo tcpdump -ni any udp port 1812</code> while the NAS sends &mdash; no packets visible means network/firewall, packets-but-no-reply means client registration.</li>
+                <li><strong>Config syntax problems</strong> &mdash; validate without running: <code>freeradius -CX</code> parses the whole configuration and exits.</li>
+            </ul>
+
+            <h2 id="security">Basic security considerations</h2>
+            <ul>
+                <li>Long, unique, per-device shared secrets &mdash; rotate when staff or hardware changes</li>
+                <li>Prefer EAP methods (PEAP-MSCHAPv2, EAP-TLS) over plain PAP wherever the NAS supports them &mdash; PAP exposes recoverable passwords on the wire unless protected by TLS tunneling</li>
+                <li>Keep the server off the public internet; RADIUS belongs on a management/trusted segment</li>
+                <li>Watch logs (<code>/var/log/freeradius/radius.log</code>) and keep the package patched via unattended-upgrades</li>
+            </ul>
+            <blockquote>Once <code>radtest</code> returns <code>Access-Accept</code> through your firewall from a
+            real NAS, you have the hardest part done &mdash; everything else (EAP certificates, SQL backends,
+            VLAN assignment policies) builds on this same request/reject loop you just watched in <code>-X</code>.</blockquote>
+        </article>
+    </main>
+
+    <footer class="footer">
+        <div class="container footer-inner">
+            <span>&copy; <span id="year"></span> Niroj Maharjan</span>
+            <span class="built">designed &amp; deployed with <span class="accent">&#60;/&#62;</span> on GitHub Pages</span>
+            <div class="socials">
+                <a href="https://github.com/nirojmaharjann" target="_blank" rel="noopener" aria-label="GitHub"><i class="mdi mdi-github-circle"></i></a>
+                <a href="mailto:niroj.maharjan@nirojmaharjan.info.np?subject=Contact%20%2F%20Feedback" aria-label="Email us" title="Email us"><i class="mdi mdi-email-outline"></i></a>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../assets/js/nepali-date.js?v=20260824.11"></script>
+    <script src="../assets/js/main.js?v=20260824.11"></script>
+</body>
+</html>

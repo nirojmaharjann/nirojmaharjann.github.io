@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How to Install Ubuntu Server: Complete Beginner Guide — Niroj Maharjan</title>
+    <meta name="description" content="A step-by-step beginner tutorial for installing Ubuntu Server LTS: downloading the ISO, creating a bootable USB, running the installer, configuring users, disks and networking, enabling SSH, updating the system and basic post-install security with UFW.">
+    <meta name="keywords" content="ubuntu server, install ubuntu server, ubuntu 24.04, bootable usb, openssh, ufw firewall, linux server setup">
+    <link rel="shortcut icon" href="../assets/images/favicon.ico" type="image/x-icon">
+
+    <!-- Apply saved/system theme before CSS paints (prevents flash) -->
+    <script>
+        (function () { try {
+            var t = localStorage.getItem('theme') ||
+                (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+            document.documentElement.setAttribute('data-theme', t);
+        } catch (e) {} })();
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../src/vendors/@mdi/font/css/materialdesignicons.min.css">
+    <link rel="stylesheet" href="../assets/css/portfolio.css?v=20260824.11">
+</head>
+<body>
+
+    <header class="site-head">
+
+    <nav class="nav">
+        <div class="container nav-inner">
+            <a class="logo" href="../index.html"><span class="tilde">~/$</span> niroj.maharjan</a>
+            <ul class="nav-links">
+                <li><a href="../index.html#about"><span class="idx">01.</span>about</a></li>
+                <li><a href="../index.html#skills"><span class="idx">02.</span>skills</a></li>
+                <li><a href="../index.html#projects"><span class="idx">03.</span>projects</a></li>
+                <li><a href="../toolbox/index.html"><span class="idx">04.</span>toolbox</a></li>
+                <li><a href="../index.html"><span class="idx">05.</span>blog</a></li>
+                <li><a href="../index.html#contact"><span class="idx">06.</span>contact</a></li>
+            </ul>
+            <div class="nav-actions">
+                <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme"></button>
+                <button class="burger" aria-label="Toggle navigation">≡</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="clock-strip">
+        <div class="container clock-inner">
+            <span><i class="mdi mdi-calendar-range"></i> <span id="ad-date">&mdash;</span></span>
+            <span class="sep">|</span>
+            <span><i class="mdi mdi-calendar-text"></i> <span id="bs-date">&mdash;</span></span>
+            <span class="sep">|</span>
+            <span><i class="mdi mdi-clock-outline"></i> <span id="np-time">&mdash;</span></span>
+        </div>
+    </div>
+    </header>
+
+    <main class="post-wrap">
+        <header class="post-header">
+            <a class="back-link" href="index.html"><i class="mdi mdi-arrow-left"></i> cd ../blog</a>
+            <div class="post-meta" style="margin-top:18px"><span class="chip">Linux</span><span>Aug 22, 2026</span><span>&middot; 8 min read</span></div>
+            <h1>How to Install Ubuntu Server: Complete Beginner Guide</h1>
+        </header>
+
+        <article class="prose">
+            <p>Ubuntu Server is the free, open-source edition of Ubuntu built without a graphical desktop &mdash;
+            everything is managed from the terminal, which makes it lightweight, fast to boot and ideal for web
+            servers, containers, databases and home labs. This guide walks you through installing the current LTS
+            release end to end: creating the installation media, running the installer, setting up your user and
+            disk, enabling SSH and hardening the basics.</p>
+
+            <nav class="toc" aria-label="Table of contents">
+                <p class="toc-title"><i class="mdi mdi-format-list-numbered"></i> Contents</p>
+                <ol>
+                    <li><a href="#requirements">What you need (requirements)</a></li>
+                    <li><a href="#download">Downloading Ubuntu Server</a></li>
+                    <li><a href="#bootable-usb">Creating a bootable USB</a></li>
+                    <li><a href="#booting">Booting from the USB</a></li>
+                    <li><a href="#installer">Walking through the installer</a></li>
+                    <li><a href="#first-login">First login and system update</a></li>
+                    <li><a href="#utilities">Installing common utilities</a></li>
+                    <li><a href="#ssh">SSH setup</a></li>
+                    <li><a href="#firewall">Basic firewall with UFW</a></li>
+                    <li><a href="#verify">Verifying the installation</a></li>
+                </ol>
+            </nav>
+
+            <h2 id="requirements">What you need (requirements)</h2>
+            <p>Ubuntu Server is deliberately light. The official minimums are modest, but give yourself headroom:</p>
+            <ul>
+                <li><strong>CPU:</strong> 1 GHz dual-core x86_64 (or ARM64) minimum &mdash; 2 GHz+ is comfortable</li>
+                <li><strong>RAM:</strong> 1 GiB absolute minimum; 2&ndash;4 GiB recommended for real workloads</li>
+                <li><strong>Disk:</strong> 5 GiB minimum; 20 GiB+ is sensible once you install packages and logs grow</li>
+                <li><strong>A 4 GB+ USB stick</strong> for the installer (it gets wiped)</li>
+                <li><strong>Wired network connection</strong> during install makes everything smoother</li>
+            </ul>
+            <div class="callout tip">
+                <i class="mdi mdi-lightbulb-on-outline"></i>
+                <p><strong>Tip.</strong> Always pick an LTS (Long Term Support) release &mdash; e.g. 24.04. It receives
+                free security updates for five years, versus nine months for interim releases.</p>
+            </div>
+
+            <h2 id="download">Downloading Ubuntu Server</h2>
+            <p>Grab the latest LTS ISO from the official site (<code>releases.ubuntu.com</code> or
+            <code>ubuntu.com/download/server</code>). Verify integrity if you want to be thorough:</p>
+<pre><code># print the SHA-256 checksum of the downloaded ISO (Linux/macOS)
+sha256sum ubuntu-24.04-live-server-amd64.iso
+
+# compare it against the SHA256SUMS file published next to the ISO
+sha256sum -c SHA256SUMS 2&gt;/dev/null | grep OK</code></pre>
+            <p>The first command prints a fingerprint of the file; if it matches the value Ubuntu publishes, your
+            download is complete and untampered.</p>
+
+            <h2 id="bootable-usb">Creating a bootable USB</h2>
+            <p>You need a tool that writes the ISO image raw onto the stick:</p>
+            <ul>
+                <li><strong>Windows:</strong> Rufus or balenaEtcher</li>
+                <li><strong>macOS:</strong> balenaEtcher</li>
+                <li><strong>Linux CLI:</strong> the classic <code>dd</code></li>
+            </ul>
+<pre><code># CAREFUL: of=/dev/sdX wipes the whole device - double-check which disk is your USB
+sudo dd if=ubuntu-24.04-live-server-amd64.iso of=/dev/sdX bs=4M status=progress conv=fsync</code></pre>
+            <ul>
+                <li><code>if=</code> &mdash; input file (the ISO)</li>
+                <li><code>of=</code> &mdash; output device (the whole USB stick, no partition number)</li>
+                <li><code>bs=4M</code> &mdash; copy in 4 MB blocks for speed</li>
+                <li><code>conv=fsync</code> &mdash; flush writes fully before reporting done</li>
+            </ul>
+            <div class="callout warn">
+                <i class="mdi mdi-alert"></i>
+                <p><strong>Warning.</strong> Writing to the wrong <code>/dev/sdX</code> destroys that drive's data.
+                Identify the stick with <code>lsblk</code> before running <code>dd</code>.</p>
+            </div>
+
+            <h2 id="booting">Booting from the USB</h2>
+            <p>Plug the stick into the target machine and power it on. Open the one-time boot menu &mdash;
+            commonly <kbd>F12</kbd>, <kbd>F11</kbd>, <kbd>F2</kbd> or <kbd>Esc</kbd> depending on vendor &mdash;
+            and select the USB device. You should land on the GRUB menu; choose
+            <strong>Try or Install Ubuntu Server</strong>.</p>
+
+            <h2 id="installer">Walking through the installer</h2>
+            <p>The live-server installer (Subiquity) asks a short series of questions:</p>
+            <ol>
+                <li><strong>Language &amp; keyboard</strong> &mdash; pick yours.</li>
+                <li><strong>Type of install</strong> &mdash; choose <em>Ubuntu Server</em> (the minimized variant omits handy tools).</li>
+                <li><strong>Network</strong> &mdash; DHCP is automatic; note the IP shown, you'll want it for SSH later.</li>
+                <li><strong>Proxy / mirror</strong> &mdash; leave defaults unless your network requires them.</li>
+                <li><strong>Storage</strong> &mdash; <em>Use entire disk</em> with LVM is the safe guided choice for beginners.</li>
+                <li><strong>Profile setup</strong> &mdash; your name, a hostname (e.g. <code>web01</code>), username and a strong password. This creates your administrative user.</li>
+                <li><strong>SSH setup</strong> &mdash; tick <em>Install OpenSSH server</em>. Remote administration starts here.</li>
+                <li><strong>Featured snaps</strong> &mdash; optional extras; skip for a minimal box.</li>
+            </ol>
+            <p>After <em>Install</em> finishes, choose <strong>Reboot now</strong> and remove the USB when prompted.
+            Log in with the username and password you created.</p>
+
+            <h2 id="first-login">First login and system update</h2>
+            <p>The very first thing on any new server is updating the package index and installed packages:</p>
+<pre><code>sudo apt update
+sudo apt upgrade -y</code></pre>
+            <ul>
+                <li><code>apt update</code> refreshes the local list of available packages and versions &mdash; it downloads metadata only, installs nothing.</li>
+                <li><code>apt upgrade -y</code> upgrades every installed package to the newest version from that index; <code>-y</code> auto-confirms.</li>
+                <li><code>sudo</code> runs the command with administrator privileges &mdash; your install-time user is in the <code>sudo</code> group automatically.</li>
+            </ul>
+            <div class="callout info">
+                <i class="mdi mdi-information-outline"></i>
+                <p><strong>Info.</strong> A kernel upgrade may schedule a reboot. Reboot with
+                <code>sudo reboot</code> whenever the motd tells you one is required.</p>
+            </div>
+
+            <h2 id="utilities">Installing common utilities</h2>
+<pre><code>sudo apt install -y curl wget git vim unzip</code></pre>
+            <ul>
+                <li><code>curl</code> &mdash; transfer data to/from URLs; essential for testing APIs and downloading scripts</li>
+                <li><code>wget</code> &mdash; straightforward non-interactive file downloader</li>
+                <li><code>git</code> &mdash; version control; how most software arrives these days</li>
+                <li><code>vim</code> &mdash; terminal text editor for config files</li>
+                <li><code>unzip</code> &mdash; extract <code>.zip</code> archives</li>
+            </ul>
+
+            <h2 id="ssh">SSH setup</h2>
+            <p>If you ticked <em>Install OpenSSH server</em> during setup it's already running. Otherwise:</p>
+<pre><code>sudo apt install openssh-server
+sudo systemctl enable --now ssh</code></pre>
+            <ul>
+                <li><code>openssh-server</code> &mdash; the SSH daemon package</li>
+                <li><code>systemctl enable --now ssh</code> &mdash; <code>enable</code> starts the service on every boot; <code>--now</code> also starts it immediately, no reboot needed</li>
+            </ul>
+            <p>From another machine, connect with:</p>
+<pre><code>ssh yourusername@SERVER_IP_ADDRESS</code></pre>
+            <p>Find the address with <code>ip addr</code> if you didn't note it during install.</p>
+
+            <h2 id="firewall">Basic firewall with UFW</h2>
+            <p>UFW (Uncomplicated Firewall) wraps the kernel's netfilter in human-readable rules:</p>
+<pre><code>sudo ufw allow OpenSSH
+sudo ufw enable
+sudo ufw status verbose</code></pre>
+            <ul>
+                <li><code>ufw allow OpenSSH</code> &mdash; permits TCP port 22 so you don't lock yourself out</li>
+                <li><code>ufw enable</code> &mdash; turns the firewall on and makes it persist across reboots</li>
+                <li><code>ufw status verbose</code> &mdash; shows active rules</li>
+            </ul>
+            <div class="callout warn">
+                <i class="mdi mdi-alert"></i>
+                <p><strong>Warning.</strong> On a remote server, review your rules BEFORE enabling UFW. If SSH isn't
+                allowed yet, <code>ufw enable</code> immediately severs your connection and physical access may be
+                your only way back. Allow OpenSSH first, then enable.</p>
+            </div>
+
+            <h2 id="verify">Verifying the installation</h2>
+<pre><code>lsb_release -a          # exact Ubuntu version
+uname -r                # running kernel version
+systemctl status ssh    # SSH service active (running)?
+ip addr                 # network interfaces and IPs
+ping -c 3 1.1.1.1       # outbound internet reachability</code></pre>
+            <p>If SSH shows <em>active (running)</em>, the firewall allows it, and you can connect from another
+            machine &mdash; congratulations, your server is ready for whatever you deploy on it next. From here,
+            consider SSH key-only authentication, unattended security upgrades
+            (<code>sudo apt install unattended-upgrades</code>) and off-site backups before calling it production.</p>
+
+            <blockquote>Every long-running server is just a fresh install plus discipline: patch early, expose few
+            ports, log what matters.</blockquote>
+        </article>
+    </main>
+
+    <footer class="footer">
+        <div class="container footer-inner">
+            <span>&copy; <span id="year"></span> Niroj Maharjan</span>
+            <span class="built">designed &amp; deployed with <span class="accent">&#60;/&#62;</span> on GitHub Pages</span>
+            <div class="socials">
+                <a href="https://github.com/nirojmaharjann" target="_blank" rel="noopener" aria-label="GitHub"><i class="mdi mdi-github-circle"></i></a>
+                <a href="mailto:niroj.maharjan@nirojmaharjan.info.np?subject=Contact%20%2F%20Feedback" aria-label="Email us" title="Email us"><i class="mdi mdi-email-outline"></i></a>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../assets/js/nepali-date.js?v=20260824.11"></script>
+    <script src="../assets/js/main.js?v=20260824.11"></script>
+</body>
+</html>

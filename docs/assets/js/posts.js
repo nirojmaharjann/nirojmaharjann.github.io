@@ -12,6 +12,30 @@
 
 var BLOG_POSTS = [
     {
+        slug: 'install-freeradius-ubuntu',
+        title: 'How to Install and Configure FreeRADIUS on Ubuntu',
+        excerpt: 'From a bare Ubuntu box to tested AAA: users, NAS clients, shared secrets, radtest, debug mode and firewall rules for ports 1812/1813.',
+        tag: 'Networking',
+        date: '2026-08-24',
+        readTime: '9 min read'
+    },
+    {
+        slug: 'aws-vpc-ec2-setup',
+        title: 'How to Create an AWS VPC and Launch an EC2 Instance',
+        excerpt: 'Build a VPC with a public subnet, Internet Gateway, route table and security group from scratch — then launch Ubuntu EC2 and serve Nginx to the world.',
+        tag: 'AWS',
+        date: '2026-08-23',
+        readTime: '12 min read'
+    },
+    {
+        slug: 'install-ubuntu-server',
+        title: 'How to Install Ubuntu Server: Complete Beginner Guide',
+        excerpt: 'Bootable USB, installer walkthrough, user creation, disk setup, SSH, first updates and UFW basics — everything a first-time server admin needs.',
+        tag: 'Linux',
+        date: '2026-08-22',
+        readTime: '8 min read'
+    },
+    {
         slug: 'github-actions-zero-downtime',
         title: 'Zero-Downtime Deployments with GitHub Actions',
         excerpt: 'A practical pipeline that builds, scans and rolls out containers to Kubernetes without a maintenance window.',

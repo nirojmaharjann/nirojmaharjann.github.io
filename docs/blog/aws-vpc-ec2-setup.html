@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How to Create an AWS VPC and Launch an EC2 Instance — Niroj Maharjan</title>
+    <meta name="description" content="Beginner-to-intermediate AWS networking tutorial: build a custom VPC with a public subnet, Internet Gateway, route table and security group, then launch and connect to an Ubuntu EC2 instance running Nginx — every step explained.">
+    <meta name="keywords" content="aws vpc, ec2, public subnet, internet gateway, route table, security group, nginx, aws networking tutorial">
+    <link rel="shortcut icon" href="../assets/images/favicon.ico" type="image/x-icon">
+
+    <!-- Apply saved/system theme before CSS paints (prevents flash) -->
+    <script>
+        (function () { try {
+            var t = localStorage.getItem('theme') ||
+                (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+            document.documentElement.setAttribute('data-theme', t);
+        } catch (e) {} })();
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../src/vendors/@mdi/font/css/materialdesignicons.min.css">
+    <link rel="stylesheet" href="../assets/css/portfolio.css?v=20260824.11">
+</head>
+<body>
+
+    <header class="site-head">
+
+    <nav class="nav">
+        <div class="container nav-inner">
+            <a class="logo" href="../index.html"><span class="tilde">~/$</span> niroj.maharjan</a>
+            <ul class="nav-links">
+                <li><a href="../index.html#about"><span class="idx">01.</span>about</a></li>
+                <li><a href="../index.html#skills"><span class="idx">02.</span>skills</a></li>
+                <li><a href="../index.html#projects"><span class="idx">03.</span>projects</a></li>
+                <li><a href="../toolbox/index.html"><span class="idx">04.</span>toolbox</a></li>
+                <li><a href="../index.html"><span class="idx">05.</span>blog</a></li>
+                <li><a href="../index.html#contact"><span class="idx">06.</span>contact</a></li>
+            </ul>
+            <div class="nav-actions">
+                <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme"></button>
+                <button class="burger" aria-label="Toggle navigation">≡</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="clock-strip">
+        <div class="container clock-inner">
+            <span><i class="mdi mdi-calendar-range"></i> <span id="ad-date">&mdash;</span></span>
+            <span class="sep">|</span>
+            <span><i class="mdi mdi-calendar-text"></i> <span id="bs-date">&mdash;</span></span>
+            <span class="sep">|</span>
+            <span><i class="mdi mdi-clock-outline"></i> <span id="np-time">&mdash;</span></span>
+        </div>
+    </div>
+    </header>
+
+    <main class="post-wrap">
+        <header class="post-header">
+            <a class="back-link" href="index.html"><i class="mdi mdi-arrow-left"></i> cd ../blog</a>
+            <div class="post-meta" style="margin-top:18px"><span class="chip">AWS</span><span>Aug 23, 2026</span><span>&middot; 12 min read</span></div>
+            <h1>How to Create an AWS VPC and Launch an EC2 Instance</h1>
+        </header>
+
+        <article class="prose">
+            <p>Launching a cloud server is easy &mdash; understanding the network it lives in is what separates a
+            lab from infrastructure. In this walkthrough we build a small but correct network from scratch:
+            a VPC with one public subnet, an Internet Gateway, a route table and a locked-down security group.
+            Then we launch an Ubuntu EC2 instance into it, connect over SSH and serve a page with Nginx.</p>
+
+            <nav class="toc" aria-label="Table of contents">
+                <p class="toc-title"><i class="mdi mdi-format-list-numbered"></i> Contents</p>
+                <ol>
+                    <li><a href="#concepts">AWS concepts in five minutes</a></li>
+                    <li><a href="#create-vpc">Part 1 &mdash; Create the VPC</a></li>
+                    <li><a href="#subnet">Part 2 &mdash; Create a public subnet</a></li>
+                    <li><a href="#igw">Part 3 &mdash; Attach an Internet Gateway</a></li>
+                    <li><a href="#routes">Part 4 &mdash; Route to the internet</a></li>
+                    <li><a href="#sg">Part 5 &mdash; Security group</a></li>
+                    <li><a href="#launch">Part 6 &mdash; Launch the EC2 instance</a></li>
+                    <li><a href="#connect">Part 7 &mdash; Connect over SSH</a></li>
+                    <li><a href="#verify-net">Part 8 &mdash; Verify networking</a></li>
+                    <li><a href="#nginx">Part 9 &mdash; Install Nginx</a></li>
+                    <li><a href="#diagram">Architecture diagram</a></li>
+                </ol>
+            </nav>
+
+            <h2 id="concepts">AWS concepts in five minutes</h2>
+            <ul>
+                <li><strong>VPC (Virtual Private Cloud)</strong> &mdash; your own private network inside AWS. You choose its IP range; nothing routes in or out unless you say so.</li>
+                <li><strong>Subnet</strong> &mdash; a subdivision of the VPC's address range tied to one Availability Zone (a physical datacenter location).</li>
+                <li><strong>Public vs private subnet</strong> &mdash; a subnet whose traffic can reach the internet via an Internet Gateway is "public"; instances there get public IPs. A private subnet has no such route &mdash; databases live there.</li>
+                <li><strong>Internet Gateway (IGW)</strong> &mdash; the door between your VPC and the internet. One per VPC.</li>
+                <li><strong>Route Table</strong> &mdash; rules that say where traffic destined for each IP range goes. The default local route keeps VPC-internal traffic inside.</li>
+                <li><strong>Security Group</strong> &mdash; a stateful firewall attached to instances. It allows (never denies) traffic by port and source.</li>
+                <li><strong>EC2</strong> &mdash; Amazon's virtual machines. You pick an OS image (AMI), size (instance type) and network placement.</li>
+            </ul>
+
+            <h2 id="create-vpc">Part 1 &mdash; Create the VPC</h2>
+            <ol>
+                <li>Sign in to the <strong>AWS Console</strong>, search for <strong>VPC</strong> and open it.</li>
+                <li><em>Create VPC</em> &rarr; choose <strong>VPC only</strong>.</li>
+                <li>Name tag: <code>demo-vpc</code>. IPv4 CIDR block: <code>10.0.0.0/16</code>.</li>
+                <li>Click <em>Create</em>.</li>
+            </ol>
+            <p><strong>CIDR in plain language:</strong> <code>10.0.0.0/16</code> means "the addresses starting with
+            10.0.x.x" &mdash; the /16 fixes the first 16 bits, leaving 16 bits (~65,536 addresses) for you to hand
+            out. A <code>/24</code> like <code>10.0.1.0/24</code> fixes 24 bits and leaves 256 addresses. Subnets
+            must fit entirely inside their VPC's range &mdash; that's what makes them subnets of it.</p>
+            <div class="callout tip">
+                <i class="mdi mdi-lightbulb-on-outline"></i>
+                <p><strong>Tip.</strong> Stick to private ranges (10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16) for VPCs.
+                They never collide with real internet addresses.</p>
+            </div>
+
+            <h2 id="subnet">Part 2 &mdash; Create a public subnet</h2>
+            <ol>
+                <li>In the VPC console: <em>Subnets</em> &rarr; <em>Create subnet</em>.</li>
+                <li>Select <code>demo-vpc</code>.</li>
+                <li>Name: <code>public-a</code>, Availability Zone: <code>ap-south-1a</code> (any single AZ), IPv4 CIDR: <code>10.0.1.0/24</code>.</li>
+                <li>Create.</li>
+            </ol>
+            <p><code>10.0.1.0/24</code> sits neatly inside <code>10.0.0.0/16</code> &mdash; AWS carves the VPC's big
+            range into smaller blocks, one per subnet. This particular slice gives us 251 usable addresses.</p>
+
+            <h2 id="igw">Part 3 &mdash; Attach an Internet Gateway</h2>
+            <ol>
+                <li><em>Internet gateways</em> &rarr; <em>Create internet gateway</em> &rarr; name it <code>demo-igw</code>.</li>
+                <li>Select it &rarr; <em>Actions</em> &rarr; <em>Attach to VPC</em> &rarr; choose <code>demo-vpc</code>.</li>
+            </ol>
+            <p>An IGW is required for any internet connectivity &mdash; without it, packets leaving the VPC have
+            nowhere to go and replies have no way back in.</p>
+
+            <h2 id="routes">Part 4 &mdash; Route to the internet</h2>
+            <ol>
+                <li><em>Route tables</em> &rarr; <em>Create route table</em> &rarr; name <code>public-rt</code>, VPC <code>demo-vpc</code>.</li>
+                <li>Open it &rarr; <em>Routes</em> tab &rarr; <em>Edit routes</em> &rarr; <em>Add route</em>:</li>
+            </ol>
+<pre><code>Destination: 0.0.0.0/0     Target: igw-xxxx (demo-igw)</code></pre>
+            <p><code>0.0.0.0/0</code> means "everything else" &mdash; the default route. Traffic not destined for
+            another VPC address goes to the IGW.</p>
+            <ol start="4">
+                <li><em>Subnet associations</em> tab &rarr; associate <code>public-a</code>. The subnet is now genuinely public.</li>
+            </ol>
+
+            <h2 id="sg">Part 5 &mdash; Security group</h2>
+            <ol>
+                <li><em>Security Groups</em> &rarr; <em>Create security group</em>; name <code>web-sg</code>, VPC <code>demo-vpc</code>.</li>
+                <li>Inbound rules:</li>
+            </ol>
+<pre><code>Type        Protocol   Port   Source
+HTTP        TCP        80     0.0.0.0/0
+HTTPS       TCP        443    0.0.0.0/0
+SSH         TCP        22     YOUR.IP.ADDR.ESS/32</code></pre>
+            <div class="callout warn">
+                <i class="mdi mdi-alert"></i>
+                <p><strong>Warning.</strong> Resist opening SSH (22) to <code>0.0.0.0/0</code> &mdash; bots scan it
+                constantly. Restrict SSH to your administrator's current IP (<code>/32</code>) or office CIDR. If
+                your IP changes often or you manage fleets, prefer <strong>AWS Systems Manager Session Manager</strong>,
+                which shells into instances through AWS APIs with zero inbound ports at all.</p>
+            </div>
+            <p>Web ports 80/443 are world-open because that's the point of a website. Everything else stays closed;
+            security groups are default-deny for inbound.</p>
+
+            <h2 id="launch">Part 6 &mdash; Launch the EC2 instance</h2>
+            <ol>
+                <li>Open <strong>EC2</strong> &rarr; <em>Launch instance</em>.</li>
+                <li><strong>Name:</strong> <code>demo-web</code>.</li>
+                <li><strong>AMI:</strong> Ubuntu Server 24.04 LTS (Free Tier eligible).</li>
+                <li><strong>Instance type:</strong> <code>t3.micro</code> (or <code>t2.micro</code> on Free Tier).</li>
+                <li><strong>Key pair:</strong> create one named <code>my-key</code> (.pem); the private file downloads once &mdash; keep it safe.</li>
+                <li><strong>Network:</strong> edit settings &rarr; VPC <code>demo-vpc</code>, subnet <code>public-a</code>, auto-assign public IP: <strong>Enable</strong>, firewall: select existing <code>web-sg</code>.</li>
+                <li>Storage: default 8 GiB gp3 is fine. Click <strong>Launch instance</strong>.</li>
+            </ol>
+
+            <h2 id="connect">Part 7 &mdash; Connect over SSH</h2>
+            <p>Copy the instance's <em>Public IPv4 address</em> from the EC2 console, then from your terminal:</p>
+<pre><code># key must be readable only by you, or SSH refuses it
+chmod 400 my-key.pem
+
+ssh -i my-key.pem ubuntu@YOUR_PUBLIC_IP</code></pre>
+            <ul>
+                <li><code>-i my-key.pem</code> &mdash; the private half of the key pair; AWS puts the public half on the instance</li>
+                <li><code>chmod 400</code> &mdash; owner-read-only; SSH rejects world-readable keys</li>
+                <li><code>ubuntu@</code> &mdash; the default username for Ubuntu AMIs (Amazon Linux uses <code>ec2-user</code>)</li>
+                <li>The security group must allow port 22 from the IP you're connecting <em>from</em></li>
+            </ul>
+
+            <h2 id="verify-net">Part 8 &mdash; Verify networking</h2>
+<pre><code>ip addr                          # interfaces + assigned private/public-ish IPs
+ip route                         # routing table - default goes to the subnet gateway
+curl https://checkip.amazonaws.com</code></pre>
+            <ul>
+                <li><code>ip addr</code> confirms the instance got its <code>10.0.1.x</code> address (eth0)</li>
+                <li><code>ip route</code> should show a <code>default via 10.0.1.1</code> line &mdash; the subnet router that forwards toward the IGW</li>
+                <li><code>curl https://checkip.amazonaws.com</code> prints your outbound view &mdash; the ElasticIP/public NAT address. If this works, internet egress is healthy</li>
+            </ul>
+
+            <h2 id="nginx">Part 9 &mdash; Install Nginx</h2>
+<pre><code>sudo apt update
+sudo apt install -y nginx
+sudo systemctl enable --now nginx</code></pre>
+            <ul>
+                <li><code>apt update</code> refreshes package indexes</li>
+                <li><code>apt install -y nginx</code> installs the web server</li>
+                <li><code>systemctl enable --now nginx</code> starts it now and on every boot</li>
+            </ul>
+            <p>Browse to <code>http://YOUR_PUBLIC_IP</code> (port 80 &mdash; allowed by <code>web-sg</code>) and
+            you'll see the "Welcome to nginx!" page served by your own little corner of AWS.</p>
+
+            <h2 id="diagram">Architecture diagram</h2>
+<pre><code>                 Internet
+                    |
+              [Internet Gateway]          demo-igw
+                    |
+           [Public Route Table]           0.0.0.0/0 -&gt; igw
+                    |
++---------------------------------------------+
+| demo-vpc 10.0.0.0/16                        |
+|   +-------------------+                     |
+|   | public-a          |                     |
+|   | 10.0.1.0/24       |                     |
+|   |   [EC2 demo-web]  |----&gt; Nginx :80      |
+|   |   sg: web-sg      |                     |
+|   +-------------------+                     |
++---------------------------------------------+</code></pre>
+            <blockquote>Once this topology makes sense, everything else in AWS networking is variation: more
+            subnets, private ones with NAT Gateways, peering, endpoints &mdash; all built from these same pieces.</blockquote>
+        </article>
+    </main>
+
+    <footer class="footer">
+        <div class="container footer-inner">
+            <span>&copy; <span id="year"></span> Niroj Maharjan</span>
+            <span class="built">designed &amp; deployed with <span class="accent">&#60;/&#62;</span> on GitHub Pages</span>
+            <div class="socials">
+                <a href="https://github.com/nirojmaharjann" target="_blank" rel="noopener" aria-label="GitHub"><i class="mdi mdi-github-circle"></i></a>
+                <a href="mailto:niroj.maharjan@nirojmaharjan.info.np?subject=Contact%20%2F%20Feedback" aria-label="Email us" title="Email us"><i class="mdi mdi-email-outline"></i></a>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../assets/js/nepali-date.js?v=20260824.11"></script>
+    <script src="../assets/js/main.js?v=20260824.11"></script>
+</body>
+</html>

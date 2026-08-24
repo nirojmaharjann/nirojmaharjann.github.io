@@ -24,7 +24,7 @@
     <link rel="stylesheet" href="../src/vendors/@mdi/font/css/materialdesignicons.min.css">
 
     <!-- Portfolio styles -->
-    <link rel="stylesheet" href="../assets/css/portfolio.css?v=20260824.10">
+    <link rel="stylesheet" href="../assets/css/portfolio.css?v=20260824.11">
 </head>
 <body>
 
@@ -67,9 +67,23 @@
 <article class="tool-sec reveal" id="hash_generator">
 <div class="field">
                     <label for="ha-in">Text to hash</label>
-                    <input type="text" id="ha-in" value="" spellcheck="false" placeholder="type anything&hellip;">
+                    <textarea class="code-in" id="ha-in" rows="3" spellcheck="false"
+                              placeholder="type or paste text&hellip;"></textarea>
                 </div>
-                <dl class="kv" id="ha-kv" hidden></dl>
+                <div class="tabs" id="ha-algos" role="tablist" aria-label="Hash algorithm">
+                    <button type="button" class="tab" data-alg="md5" role="tab" aria-selected="false">MD5</button>
+                    <button type="button" class="tab" data-alg="sha1" role="tab" aria-selected="false">SHA-1</button>
+                    <button type="button" class="tab on" data-alg="sha256" role="tab" aria-selected="true">SHA-256</button>
+                    <button type="button" class="tab" data-alg="sha384" role="tab" aria-selected="false">SHA-384</button>
+                    <button type="button" class="tab" data-alg="sha512" role="tab" aria-selected="false">SHA-512</button>
+                </div>
+                <div class="gen-actions">
+                    <button type="button" class="btn" id="ha-go"><i class="mdi mdi-flash"></i> Generate Hash</button>
+                    <button type="button" class="btn-ghost" data-copy-target="ha-out"><i class="mdi mdi-content-copy"></i> Copy</button>
+                    <button type="button" class="btn-ghost" id="ha-reset"><i class="mdi mdi-refresh"></i> Reset</button>
+                </div>
+                <p class="fmsg" id="ha-error" hidden></p>
+                <pre class="code-out" id="ha-out">// hash appears here</pre>
             
 </article>
 <aside class="about-box reveal">
@@ -161,9 +175,9 @@
         </div>
     </footer>
 
-    <script src="../assets/js/tb-lib.js?v=20260824.10"></script>
-    <script src="../assets/js/tb-security.js?v=20260824.10"></script>
-    <script src="../assets/js/nepali-date.js?v=20260824.10"></script>
-    <script src="../assets/js/main.js?v=20260824.10"></script>
+    <script src="../assets/js/tb-lib.js?v=20260824.11"></script>
+    <script src="../assets/js/tb-security.js?v=20260824.11"></script>
+    <script src="../assets/js/nepali-date.js?v=20260824.11"></script>
+    <script src="../assets/js/main.js?v=20260824.11"></script>
 </body>
 </html>
