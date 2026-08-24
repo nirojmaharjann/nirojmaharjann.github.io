@@ -105,12 +105,17 @@ body > :not(.bg-floaters):not(.site-head) {
   margin-inline: auto;
 }
 
-/* ---------- Floating tech logos (live background) ---------- */
+/* ---------- Floating tech logos (live background) ----------
+   Purely decorative: the layer and every child are pointer-events:none
+   with !important so hit-testing can NEVER land on it. */
+.bg-floaters,
+.bg-floaters * {
+  pointer-events: none !important;
+}
 .bg-floaters {
   position: fixed;
   inset: 0;
   overflow: hidden;
-  pointer-events: none;
   z-index: 0;
 }
 .bg-floaters span {
@@ -119,7 +124,6 @@ body > :not(.bg-floaters):not(.site-head) {
   left: var(--x, 50%);
   animation: floater-rise var(--d, 40s) linear infinite;
   animation-delay: var(--delay, 0s);
-  will-change: transform;
 }
 .bg-floaters span i {
   display: block;
@@ -129,6 +133,23 @@ body > :not(.bg-floaters):not(.site-head) {
   filter: drop-shadow(0 0 14px var(--c, var(--floater-color)));
   animation: floater-sway calc(var(--d, 40s) / 6) ease-in-out infinite alternate;
 }
+/* depth layers: far icons recede (small + blurred), near ones drift closer */
+.bg-floaters .fl-far {
+  opacity: 0.55;
+}
+.bg-floaters .fl-far i {
+  filter: blur(2px) drop-shadow(0 0 10px var(--c, var(--floater-color)));
+  opacity: calc(var(--floater-alpha, 0.25) * 0.7);
+}
+.bg-floaters .fl-near i {
+  filter: drop-shadow(0 0 18px var(--c, var(--floater-color)));
+}
+/* ultra-slow rotation on a third of the icons */
+.bg-floaters i.fl-spin {
+  animation:
+    floater-sway calc(var(--d, 40s) / 6) ease-in-out infinite alternate,
+    floater-spin calc(var(--d, 40s) * 2.5) linear infinite;
+}
 @keyframes floater-rise {
   from { transform: translateY(0); }
   to { transform: translateY(135vh); }
@@ -136,6 +157,18 @@ body > :not(.bg-floaters):not(.site-head) {
 @keyframes floater-sway {
   from { transform: translateX(-16px) rotate(-10deg); }
   to { transform: translateX(16px) rotate(10deg); }
+}
+@keyframes floater-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Tablet: drop the far layer; Mobile: far + near layers off */
+@media (max-width: 900px) {
+  .bg-floaters .fl-far { display: none; }
+}
+@media (max-width: 640px) {
+  .bg-floaters .fl-near { display: none; }
 }
 
 /* ---------- Navigation ---------- */
@@ -1567,3 +1600,36 @@ a.tool-card { display: flex; flex-direction: column; gap: 10px; text-decoration:
   background: rgba(255, 107, 107, 0.07); font-size: 0.82rem;
 }
 .field.invalid input, .field.invalid select, .field.invalid textarea { border-color: #ff6b6b; }
+
+/* ---------- Click-through guarantees for foreground UI ----------
+   Interactive zones sit above any decorative layer and always accept
+   pointers, whatever their ancestors do. */
+.res-grid, .res-actions, .gen-actions, .tabs, #kg-fields,
+.footer-inner .socials a {
+  position: relative;
+  z-index: 2;
+  pointer-events: auto;
+}
+.res-chip { cursor: pointer; pointer-events: auto; }
+
+/* Mail / contact icon affordances */
+.footer-inner .socials a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px; height: 38px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+}
+.footer-inner .socials a:hover {
+  color: var(--accent);
+  text-decoration: none;
+  transform: translateY(-3px);
+  box-shadow: 0 6px 18px rgba(0, 229, 159, 0.18);
+}
+.footer-inner .socials a:active { transform: translateY(-1px) scale(0.96); }
+.footer-inner .socials a:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}

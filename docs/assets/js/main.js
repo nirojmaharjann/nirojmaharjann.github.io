@@ -7,32 +7,56 @@
   var reduceMotion = window.matchMedia &&
     window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   if (!reduceMotion) {
+    /* icon class + brand color pairs */
     var FLOAT_ICONS = [
-      'mdi-aws', 'mdi-docker', 'mdi-linux', 'mdi-kubernetes',
-      'mdi-terraform', 'mdi-ansible', 'mdi-git', 'mdi-gitlab',
-      'mdi-nodejs', 'mdi-language-python', 'mdi-language-go',
-      'mdi-language-javascript'
+      ['mdi-language-javascript', '#F7DF1E'], ['mdi-language-typescript', '#3178C6'],
+      ['mdi-nodejs', '#83CD29'], ['mdi-language-python', '#3776AB'],
+      ['mdi-language-java', '#EA2D2E'], ['mdi-language-go', '#00ADD8'],
+      ['mdi-hexagon', '#CE422B'], ['mdi-language-cpp', '#659AD2'],
+      ['mdi-language-csharp', '#68217A'], ['mdi-language-php', '#777BB3'],
+      ['mdi-react', '#61DAFB'], ['mdi-vuejs', '#42B883'], ['mdi-angular', '#DD0031'],
+      ['mdi-language-html5', '#E34F26'], ['mdi-language-css3', '#1572B6'],
+      ['mdi-sass', '#CC6699'], ['mdi-webhook', '#2496ED'], ['mdi-flask', '#009688'],
+      ['mdi-lambda', '#FF9900'], ['mdi-graphql', '#E10098'],
+      ['mdi-docker', '#2496ED'], ['mdi-kubernetes', '#326CE5'], ['mdi-cube-outline', '#326CE5'],
+      ['mdi-git', '#F05032'], ['mdi-github-circle', '#FFFFFF'], ['mdi-gitlab', '#FC6D26'],
+      ['mdi-bitbucket', '#2684FF'], ['mdi-source-branch', '#7B42BC'], ['mdi-flash', '#F5A623'],
+      ['mdi-terraform', '#7B42BC'], ['mdi-ansible', '#EE0000'],
+      ['mdi-aws', '#FF9900'], ['mdi-azure', '#0089D6'], ['mdi-google', '#4285F4'],
+      ['mdi-cloud', '#8AB4F8'], ['mdi-cloud-outline', '#8AB4F8'],
+      ['mdi-database', '#336791'], ['mdi-server-network', '#95A5A6'],
+      ['mdi-linux', '#FCC624'], ['mdi-console', '#4E9A06'], ['mdi-api', '#0B8F63'],
+      ['mdi-network', '#2496ED'], ['mdi-shield-key', '#00E59F'], ['mdi-lock', '#F5A623']
     ];
-    /* brand colors, one per icon above */
-    var FLOAT_COLORS = [
-      '#FF9900', '#2496ED', '#FCC624', '#326CE5',
-      '#7B42BC', '#EE0000', '#F05032', '#FC6D26',
-      '#83CD29', '#FFD43B', '#00ADD8', '#F7DF1E'
-    ];
-    var FLOATER_COUNT = 16;
+    var FLOATER_COUNT = 34;
     var floaters = document.createElement('div');
     floaters.className = 'bg-floaters';
     floaters.setAttribute('aria-hidden', 'true');
     for (var fi = 0; fi < FLOATER_COUNT; fi++) {
       var fSpan = document.createElement('span');
+      var pick = FLOAT_ICONS[Math.floor(Math.random() * FLOAT_ICONS.length)];
       var fIcon = document.createElement('i');
-      fIcon.className = 'mdi ' + FLOAT_ICONS[fi % FLOAT_ICONS.length];
-      fSpan.style.setProperty('--c', FLOAT_COLORS[fi % FLOAT_COLORS.length]);
+      fIcon.className = 'mdi ' + pick[0];
+      fSpan.style.setProperty('--c', pick[1]);
       fSpan.style.setProperty('--x', (Math.random() * 96 + 2).toFixed(2) + '%');
-      fSpan.style.setProperty('--s', Math.round(Math.random() * 40 + 22) + 'px');
-      fSpan.style.setProperty('--d', (Math.random() * 30 + 28).toFixed(1) + 's');
+      /* three depth layers: far (small, blurred), mid (default), near (large) */
+      var layerRoll = Math.random();
+      var layer = layerRoll < 0.34 ? 'fl-far' : layerRoll < 0.78 ? 'fl-mid' : 'fl-near';
+      fSpan.className = layer;
+      if (layer === 'fl-far') {
+        fSpan.style.setProperty('--s', Math.round(Math.random() * 8 + 14) + 'px');
+        fSpan.style.setProperty('--d', (Math.random() * 30 + 55).toFixed(1) + 's');
+      } else if (layer === 'fl-near') {
+        fSpan.style.setProperty('--s', Math.round(Math.random() * 18 + 36) + 'px');
+        fSpan.style.setProperty('--d', (Math.random() * 18 + 30).toFixed(1) + 's');
+      } else {
+        fSpan.style.setProperty('--s', Math.round(Math.random() * 16 + 22) + 'px');
+        fSpan.style.setProperty('--d', (Math.random() * 28 + 40).toFixed(1) + 's');
+      }
       /* negative delay so logos are already mid-flight on load */
-      fSpan.style.setProperty('--delay', (-Math.random() * 40).toFixed(1) + 's');
+      fSpan.style.setProperty('--delay', (-Math.random() * 60).toFixed(1) + 's');
+      /* every third icon drifts with an extra ultra-slow rotation */
+      if (fi % 3 === 0) fIcon.classList.add('fl-spin');
       fSpan.appendChild(fIcon);
       floaters.appendChild(fSpan);
     }
