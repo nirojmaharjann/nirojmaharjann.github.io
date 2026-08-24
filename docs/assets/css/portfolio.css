@@ -1500,3 +1500,70 @@ a.tool-card { display: flex; flex-direction: column; gap: 10px; text-decoration:
   text-align: right; color: var(--muted); opacity: 0.55;
   font-size: inherit; user-select: none;
 }
+
+/* ---------- K8s manifest generator ---------- */
+.preset-bar { display: flex; align-items: center; gap: 10px; }
+.preset-bar select { max-width: 280px; }
+
+.res-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.res-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  border: 1px solid var(--border); border-radius: 999px;
+  padding: 7px 14px; cursor: pointer; font-size: 0.82rem;
+  color: var(--muted); transition: all 0.15s ease; user-select: none;
+}
+.res-chip input { accent-color: var(--accent); margin: 0; }
+.res-chip:hover { color: var(--text); border-color: var(--line-hover); }
+.res-chip:has(input:checked) {
+  color: var(--accent); border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+
+.res-actions { display: flex; gap: 8px; margin-top: 10px; }
+
+.kg-card {
+  border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 18px; margin-top: 18px; background: var(--panel);
+}
+.kg-card > h3 {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 0.95rem; margin-bottom: 14px; color: var(--text);
+}
+.kg-card > h3 .mdi { color: var(--accent); }
+
+.check-field { display: flex; flex-direction: column; justify-content: center; }
+.check-row { display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.85rem; }
+.check-row input { accent-color: var(--accent); width: 15px; height: 15px; }
+.fhint { font-size: 0.72rem; color: var(--muted); margin-top: 3px; }
+
+.kv-editor { grid-column: 1 / -1; }
+.kv-rows { display: flex; flex-direction: column; gap: 6px; margin-top: 4px; }
+.kv-row { display: grid; grid-template-columns: minmax(90px, 1fr) 2fr auto; gap: 6px; align-items: center; }
+.kv-del {
+  background: transparent; border: 1px solid var(--border); border-radius: 6px;
+  color: var(--muted); width: 30px; height: 30px; cursor: pointer;
+}
+.kv-del:hover { color: #ff6b6b; border-color: #ff6b6b; }
+.kv-add { margin-top: 8px; }
+
+.note-box {
+  font-size: 0.8rem; color: var(--muted);
+  border-left: 3px solid var(--accent);
+  background: color-mix(in srgb, var(--accent) 7%, transparent);
+  border-radius: 0 var(--radius-sm, 6px) var(--radius-sm, 6px) 0;
+  padding: 9px 12px; margin: 0 0 12px;
+}
+.note-box code { font-family: var(--mono); font-size: 0.75rem; color: var(--text); }
+.note-box.warn {
+  border-left-color: #f5a623;
+  background: rgba(245, 166, 35, 0.08);
+  color: var(--text);
+}
+
+.gen-actions { display: flex; gap: 10px; margin-top: 18px; }
+.kg-errors {
+  margin-top: 12px; padding: 10px 12px;
+  border: 1px solid rgba(255, 107, 107, 0.45); border-radius: var(--radius-sm, 6px);
+  background: rgba(255, 107, 107, 0.07); font-size: 0.82rem;
+}
+.field.invalid input, .field.invalid select, .field.invalid textarea { border-color: #ff6b6b; }
