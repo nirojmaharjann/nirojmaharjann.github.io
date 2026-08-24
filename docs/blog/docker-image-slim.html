@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shrinking Docker Images: 1.2 GB → 120 MB — Niroj Maharjan</title>
+    <meta name="description" content="Multi-stage builds, alpine bases and layer hygiene: a practical guide to making Docker images small, fast and safer.">
+    <script>
+        // Apply saved/system theme before CSS paints (prevents flash)
+        (function () { try {
+            var t = localStorage.getItem('theme') ||
+                (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+            document.documentElement.setAttribute('data-theme', t);
+        } catch (e) {} })();
+    </script>
+    <link rel="shortcut icon" href="../assets/images/favicon.ico" type="image/x-icon">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../src/vendors/@mdi/font/css/materialdesignicons.min.css">
+    <link rel="stylesheet" href="../assets/css/portfolio.css?v=20260824.3">
+</head>
+<body>
+
+    <header class="site-head">
+
+    <nav class="nav">
+        <div class="container nav-inner">
+            <a class="logo" href="../index.html"><span class="tilde">~/$</span> niroj.maharjan</a>
+            <ul class="nav-links">
+                <li><a href="../index.html#about"><span class="idx">01.</span>about</a></li>
+                <li><a href="../index.html#skills"><span class="idx">02.</span>skills</a></li>
+                <li><a href="../index.html#projects"><span class="idx">03.</span>projects</a></li>
+                <li><a href="../tools/index.html"><span class="idx">04.</span>tools</a></li>
+                <li><a href="../index.html"><span class="idx">05.</span>blog</a></li>
+                <li><a href="../index.html#contact"><span class="idx">06.</span>contact</a></li>
+            </ul>
+            <div class="nav-actions">
+                <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme"></button>
+                <button class="burger" aria-label="Toggle navigation">&#8801;</button>
+            </div>
+        </div>
+    </nav>
+    <div class="clock-strip">
+        <div class="container clock-inner">
+            <span><i class="mdi mdi-calendar-range"></i> <span id="ad-date">&mdash;</span></span>
+            <span class="sep">|</span>
+            <span><i class="mdi mdi-calendar-text"></i> <span id="bs-date">&mdash;</span></span>
+            <span class="sep">|</span>
+            <span><i class="mdi mdi-clock-outline"></i> <span id="np-time">&mdash;</span></span>
+        </div>
+    </div>
+    </header>
+
+    <main class="post-wrap">
+        <header class="post-header">
+            <a class="back-link" href="index.html"><i class="mdi mdi-arrow-left"></i> cd ../blog</a>
+            <div class="post-meta" style="margin-top:18px"><span class="chip">Docker</span><span>Jul 28, 2026</span><span>· 5 min read</span></div>
+            <h1>Shrinking Docker Images: 1.2 GB → 120 MB</h1>
+        </header>
+
+        <article class="prose">
+            <p>
+                A 1.2 GB image doesn't just waste registry space. It slows every CI run, every node
+                scale-up event, and every cold start. And because it usually contains build tools and
+                package managers, it widens your attack surface too. Here's how I took one of our
+                Python services from 1.2 GB to 120 MB without changing application code.
+            </p>
+
+            <h2>Mistake #1: building in the same image you ship</h2>
+            <p>
+                The classic single-stage Dockerfile installs compilers, pip caches and the whole
+                build toolchain — then ships all of it to production. Multi-stage builds fix this
+                by separating the <em>build environment</em> from the <em>runtime</em>:
+            </p>
+<pre><code># ---- build stage ----
+FROM python:3.12 AS build
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --prefix=/install -r requirements.txt
+
+COPY . .
+
+# ---- runtime stage ----
+FROM python:3.12-slim
+WORKDIR /app
+COPY --from=build /install /usr/local
+COPY --from=build /app .
+
+USER 1000
+CMD ["gunicorn", "-w", "4", "app:app"]</code></pre>
+            <p>
+                Only the second stage ends up in the final image. Compilers and caches never leave the builder.
+            </p>
+
+            <h2>Mistake #2: ignoring layer order</h2>
+            <p>
+                Each instruction is a layer, and layers are cached. If you copy source code before
+                installing dependencies, every code change re-downloads all packages in CI.
+                Copy the dependency manifest first, install, then copy the rest:
+            </p>
+            <ul>
+                <li><code>COPY requirements.txt .</code> → changes rarely</li>
+                <li><code>RUN pip install ...</code> → cached unless deps change</li>
+                <li><code>COPY . .</code> → changes constantly</li>
+            </ul>
+
+            <h2>Mistake #3: keeping the fat base image</h2>
+            <p>
+                <code>python:3.12</code> is around 1 GB; <code>python:3.12-slim</code> is about 130 MB.
+                For compiled languages the equivalent win is even bigger — Go binaries can ship in
+                <code>FROM scratch</code> or <code>distroless</code>, landing under 20 MB with no shell
+                for an attacker to use.
+            </p>
+
+            <h2>The checklist</h2>
+            <ol>
+                <li>Use multi-stage builds — build tools stay behind.</li>
+                <li>Pick slim/alpine/distroless base images.</li>
+                <li>Order layers from least to most frequently changing.</li>
+                <li>Combine related <code>RUN</code> commands and clean caches in the same layer.</li>
+                <li>Add <code>.dockerignore</code> — never copy <code>.git</code>, tests or local env files into the image.</li>
+                <li>Run as a non-root user (costs nothing, blocks entire exploit classes).</li>
+            </ol>
+
+            <blockquote>
+                Measure it: <code>docker images</code> and <code>dive &lt;image&gt;</code> show exactly
+                where the megabytes are hiding. Optimisation without measurement is guesswork.
+            </blockquote>
+
+            <p>
+                The result: faster pipelines, quicker scaling events, smaller pull costs — and a
+                security review that stops flagging your images as "contains gcc, curl and 400 other things".
+            </p>
+        </article>
+    </main>
+
+    <footer class="footer">
+        <div class="container footer-inner">
+            <span>&copy; <span id="year"></span> Niroj Maharjan</span>
+            <span class="built">designed &amp; deployed with <span class="accent">&#60;/&#62;</span> on GitHub Pages</span>
+            <div class="socials">
+                <a href="https://github.com/nirojmaharjann" target="_blank" rel="noopener" aria-label="GitHub"><i class="mdi mdi-github-circle"></i></a>
+                <a href="mailto:your-email@example.com" aria-label="Email"><i class="mdi mdi-email-outline"></i></a>
+            </div>
+        </div>
+    </footer>
+
+<script src="../assets/js/nepali-date.js?v=20260824.3"></script>
+    <script src="../assets/js/main.js?v=20260824.3"></script>
+</body>
+</html>

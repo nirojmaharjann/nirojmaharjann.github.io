@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blog — Niroj Maharjan</title>
+    <meta name="description" content="Technical notes on DevOps, AWS, Docker, Kubernetes, Linux and observability by Niroj Maharjan.">
+    <script>
+        // Apply saved/system theme before CSS paints (prevents flash)
+        (function () { try {
+            var t = localStorage.getItem('theme') ||
+                (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+            document.documentElement.setAttribute('data-theme', t);
+        } catch (e) {} })();
+    </script>
+    <link rel="shortcut icon" href="../assets/images/favicon.ico" type="image/x-icon">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+
+    <!-- Icons -->
+    <link rel="stylesheet" href="../src/vendors/@mdi/font/css/materialdesignicons.min.css">
+
+    <!-- Portfolio styles -->
+    <link rel="stylesheet" href="../assets/css/portfolio.css?v=20260824.3">
+</head>
+<body>
+
+    <header class="site-head">
+
+    <nav class="nav">
+        <div class="container nav-inner">
+            <a class="logo" href="../index.html"><span class="tilde">~/$</span> niroj.maharjan</a>
+            <ul class="nav-links">
+                <li><a href="../index.html#about"><span class="idx">01.</span>about</a></li>
+                <li><a href="../index.html#skills"><span class="idx">02.</span>skills</a></li>
+                <li><a href="../index.html#projects"><span class="idx">03.</span>projects</a></li>
+                <li><a href="../tools/index.html"><span class="idx">04.</span>tools</a></li>
+                <li><a href="index.html" class="active"><span class="idx">05.</span>blog</a></li>
+                <li><a href="../index.html#contact"><span class="idx">06.</span>contact</a></li>
+            </ul>
+            <div class="nav-actions">
+                <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme"></button>
+                <button class="burger" aria-label="Toggle navigation">&#8801;</button>
+            </div>
+        </div>
+    </nav>
+    <div class="clock-strip">
+        <div class="container clock-inner">
+            <span><i class="mdi mdi-calendar-range"></i> <span id="ad-date">&mdash;</span></span>
+            <span class="sep">|</span>
+            <span><i class="mdi mdi-calendar-text"></i> <span id="bs-date">&mdash;</span></span>
+            <span class="sep">|</span>
+            <span><i class="mdi mdi-clock-outline"></i> <span id="np-time">&mdash;</span></span>
+        </div>
+    </div>
+    </header>
+
+    <header class="page-head container reveal visible">
+        <p class="section-tag">// blog</p>
+        <h1>$ ls ./posts</h1>
+        <p class="sub">
+            Field notes from running infrastructure — CI/CD pipelines, containers,
+            clusters and everything I break (and then fix) along the way.
+        </p>
+    </header>
+
+    <section class="section" style="padding-top:40px">
+        <div class="container">
+            <div class="blog-grid" id="post-list"></div>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <div class="container footer-inner">
+            <span>&copy; <span id="year"></span> Niroj Maharjan</span>
+            <span class="built">designed &amp; deployed with <span class="accent">&#60;/&#62;</span> on GitHub Pages</span>
+            <div class="socials">
+                <a href="https://github.com/nirojmaharjann" target="_blank" rel="noopener" aria-label="GitHub"><i class="mdi mdi-github-circle"></i></a>
+                <a href="mailto:your-email@example.com" aria-label="Email"><i class="mdi mdi-email-outline"></i></a>
+            </div>
+        </div>
+    </footer>
+
+<script src="../assets/js/nepali-date.js?v=20260824.3"></script>
+    <script src="../assets/js/posts.js?v=20260824.3"></script>
+    <script src="../assets/js/main.js?v=20260824.3"></script>
+</body>
+</html>

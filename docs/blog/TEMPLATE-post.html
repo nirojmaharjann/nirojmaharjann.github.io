@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<!-- ============================================================
+  HOW TO PUBLISH A NEW BLOG POST
+  1. Copy this file to: docs/blog/<your-slug>.html
+     (slug = short lowercase-dash name, e.g. my-new-post)
+  2. Replace every {{PLACEHOLDER}} below.
+  3. Write your content inside <article class="prose"> using:
+       <h2>Section</h2> <p>text</p>
+       <pre><code>code block</code></pre>
+       <code>inline code</code> <blockquote>quote</blockquote>
+  4. Open docs/assets/js/posts.js and add an entry at the TOP
+     of the BLOG_POSTS array:
+       { slug: 'your-slug', title: '...', excerpt: '...',
+         tag: 'Docker', date: '2026-09-01', readTime: '5 min read' },
+  5. Commit + push. Home page teaser and blog listing update
+     automatically (sorted by date).
+============================================================ -->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{POST TITLE}} — Niroj Maharjan</title>
+    <meta name="description" content="{{ONE-LINE DESCRIPTION FOR SEO / SOCIAL}}">
+    <link rel="shortcut icon" href="../assets/images/favicon.ico" type="image/x-icon">
+
+    <!-- Apply saved/system theme before CSS paints (prevents flash) -->
+    <script>
+        (function () { try {
+            var t = localStorage.getItem('theme') ||
+                (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+            document.documentElement.setAttribute('data-theme', t);
+        } catch (e) {} })();
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../src/vendors/@mdi/font/css/materialdesignicons.min.css">
+    <link rel="stylesheet" href="../assets/css/portfolio.css?v=20260824.3">
+</head>
+<body>
+
+    <header class="site-head">
+
+    <nav class="nav">
+        <div class="container nav-inner">
+            <a class="logo" href="../index.html"><span class="tilde">~/$</span> niroj.maharjan</a>
+            <ul class="nav-links">
+                <li><a href="../index.html#about"><span class="idx">01.</span>about</a></li>
+                <li><a href="../index.html#skills"><span class="idx">02.</span>skills</a></li>
+                <li><a href="../index.html#projects"><span class="idx">03.</span>projects</a></li>
+                <li><a href="../tools/index.html"><span class="idx">04.</span>tools</a></li>
+                <li><a href="../index.html"><span class="idx">05.</span>blog</a></li>
+                <li><a href="../index.html#contact"><span class="idx">06.</span>contact</a></li>
+            </ul>
+            <div class="nav-actions">
+                <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme"></button>
+                <button class="burger" aria-label="Toggle navigation">≡</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="clock-strip">
+        <div class="container clock-inner">
+            <span><i class="mdi mdi-calendar-range"></i> <span id="ad-date">&mdash;</span></span>
+            <span class="sep">|</span>
+            <span><i class="mdi mdi-calendar-text"></i> <span id="bs-date">&mdash;</span></span>
+            <span class="sep">|</span>
+            <span><i class="mdi mdi-clock-outline"></i> <span id="np-time">&mdash;</span></span>
+        </div>
+    </div>
+    </header>
+
+    <main class="post-wrap">
+        <header class="post-header">
+            <a class="back-link" href="index.html"><i class="mdi mdi-arrow-left"></i> cd ../blog</a>
+            <div class="post-meta" style="margin-top:18px"><span class="chip">{{TAG}}</span><span>{{DATE e.g. Sep 1, 2026}}</span><span>· {{X min read}}</span></div>
+            <h1>{{POST TITLE}}</h1>
+        </header>
+
+        <article class="prose">
+            <p>{{Opening paragraph — hook the reader with the problem you're solving.}}</p>
+
+            <h2>{{First section}}</h2>
+            <p>{{Body text...}}</p>
+<pre><code>{{optional code block}}</code></pre>
+            <p>{{More body text...}}</p>
+
+            <h2>{{Second section}}</h2>
+            <ul>
+                <li>{{point one}}</li>
+                <li>{{point two}}</li>
+            </ul>
+
+            <blockquote>{{A takeaway worth remembering.}}</blockquote>
+
+            <p>{{Closing thoughts / what's next.}}</p>
+        </article>
+    </main>
+
+    <footer class="footer">
+        <div class="container footer-inner">
+            <span>&copy; <span id="year"></span> Niroj Maharjan</span>
+            <span class="built">designed &amp; deployed with <span class="accent">&#60;/&#62;</span> on GitHub Pages</span>
+            <div class="socials">
+                <a href="https://github.com/nirojmaharjann" target="_blank" rel="noopener" aria-label="GitHub"><i class="mdi mdi-github-circle"></i></a>
+                <a href="mailto:your-email@example.com" aria-label="Email"><i class="mdi mdi-email-outline"></i></a>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../assets/js/nepali-date.js?v=20260824.3"></script>
+    <script src="../assets/js/main.js?v=20260824.3"></script>
+</body>
+</html>

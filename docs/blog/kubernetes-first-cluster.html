@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lessons from My First Kubernetes Cluster — Niroj Maharjan</title>
+    <meta name="description" content="Practical lessons from bootstrapping a first Kubernetes cluster: resource requests, probes, namespaces, GitOps and the mistakes to avoid.">
+    <script>
+        // Apply saved/system theme before CSS paints (prevents flash)
+        (function () { try {
+            var t = localStorage.getItem('theme') ||
+                (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+            document.documentElement.setAttribute('data-theme', t);
+        } catch (e) {} })();
+    </script>
+    <link rel="shortcut icon" href="../assets/images/favicon.ico" type="image/x-icon">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../src/vendors/@mdi/font/css/materialdesignicons.min.css">
+    <link rel="stylesheet" href="../assets/css/portfolio.css?v=20260824.3">
+</head>
+<body>
+
+    <header class="site-head">
+
+    <nav class="nav">
+        <div class="container nav-inner">
+            <a class="logo" href="../index.html"><span class="tilde">~/$</span> niroj.maharjan</a>
+            <ul class="nav-links">
+                <li><a href="../index.html#about"><span class="idx">01.</span>about</a></li>
+                <li><a href="../index.html#skills"><span class="idx">02.</span>skills</a></li>
+                <li><a href="../index.html#projects"><span class="idx">03.</span>projects</a></li>
+                <li><a href="../tools/index.html"><span class="idx">04.</span>tools</a></li>
+                <li><a href="../index.html"><span class="idx">05.</span>blog</a></li>
+                <li><a href="../index.html#contact"><span class="idx">06.</span>contact</a></li>
+            </ul>
+            <div class="nav-actions">
+                <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme"></button>
+                <button class="burger" aria-label="Toggle navigation">&#8801;</button>
+            </div>
+        </div>
+    </nav>
+    <div class="clock-strip">
+        <div class="container clock-inner">
+            <span><i class="mdi mdi-calendar-range"></i> <span id="ad-date">&mdash;</span></span>
+            <span class="sep">|</span>
+            <span><i class="mdi mdi-calendar-text"></i> <span id="bs-date">&mdash;</span></span>
+            <span class="sep">|</span>
+            <span><i class="mdi mdi-clock-outline"></i> <span id="np-time">&mdash;</span></span>
+        </div>
+    </div>
+    </header>
+
+    <main class="post-wrap">
+        <header class="post-header">
+            <a class="back-link" href="index.html"><i class="mdi mdi-arrow-left"></i> cd ../blog</a>
+            <div class="post-meta" style="margin-top:18px"><span class="chip">Kubernetes</span><span>Jun 15, 2026</span><span>· 7 min read</span></div>
+            <h1>Lessons from My First Kubernetes Cluster</h1>
+        </header>
+
+        <article class="prose">
+            <p>
+                Everyone remembers their first cluster: you run <code>kubeadm init</code> (or click
+                through a managed offering), apply a YAML that works, feel like a genius for ten
+                minutes — then spend the next week learning why everything is <code>CrashLoopBackOff</code>.
+                These are the lessons I paid tuition for, so you don't have to.
+            </p>
+
+            <h2>1. Set resource requests before you think you need them</h2>
+            <p>
+                I skipped <code>resources.requests</code> because "it works without it". Then one noisy
+                container starved its node neighbours and took down three unrelated services.
+                Requests drive scheduling; limits prevent runaway containers. Both belong in every
+                deployment from day one:
+            </p>
+<pre><code>resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    memory: 256Mi</code></pre>
+
+            <h2>2. Liveness and readiness probes are different things</h2>
+            <p>
+                I pointed both at the same endpoint and wondered why pods restarted during deploys.
+                The distinction finally stuck:
+            </p>
+            <ul>
+                <li><strong>Readiness</strong> — "can I serve traffic right now?" Failing this removes the pod from Service endpoints but doesn't restart it.</li>
+                <li><strong>Liveness</strong> — "am I deadlocked?" Failing this restarts the container.</li>
+            </ul>
+            <p>A heavy readiness check that occasionally times out should never trigger a restart loop.</p>
+
+            <h2>3. Namespaces are free — use them</h2>
+            <p>
+                Everything lived in <code>default</code> at first. One <code>kubectl delete</code> typo
+                later, I started separating workloads into namespaces with ResourceQuotas. It also makes
+                RBAC, network policies and cost attribution dramatically easier later.
+            </p>
+
+            <h2>4. Write the YAML down — all of it</h2>
+            <p>
+                Manual <code>kubectl edit</code> fixes feel fast until you rebuild the cluster and can't
+                reproduce them. Every object that matters lives in Git now, applied by ArgoCD. If it's not
+                in the repo, it doesn't exist. This one habit converts Kubernetes from a snowflake into
+                infrastructure you can delete on a Friday and restore by Monday.
+            </p>
+
+            <h2>5. Debugging order that actually works</h2>
+            <ol>
+                <li><code>kubectl get events --sort-by=.metadata.creationTimestamp -n &lt;ns&gt;</code></li>
+                <li><code>kubectl describe pod &lt;pod&gt;</code> — read the Events section bottom-up</li>
+                <li><code>kubectl logs &lt;pod&gt; --previous</code> — the crashed container's last words</li>
+                <li>Only then reach for ephemeral debug containers</li>
+            </ol>
+
+            <blockquote>
+                90% of "Kubernetes problems" are actually application problems wearing a Kubernetes costume.
+                The events feed will tell you which one you have.
+            </blockquote>
+
+            <h2>What I'd do differently</h2>
+            <p>
+                Start with a managed control plane (EKS/GKE) instead of self-managing masters, add the
+                Prometheus stack immediately rather than "once things stabilise", and define PodDisruptionBudgets
+                before the first voluntary node drain — not after the first involuntary one. Kubernetes has a
+                steep curve, but each of these lessons compounds: get them early and the platform starts
+                working <em>for</em> you instead of the other way around.
+            </p>
+        </article>
+    </main>
+
+    <footer class="footer">
+        <div class="container footer-inner">
+            <span>&copy; <span id="year"></span> Niroj Maharjan</span>
+            <span class="built">designed &amp; deployed with <span class="accent">&#60;/&#62;</span> on GitHub Pages</span>
+            <div class="socials">
+                <a href="https://github.com/nirojmaharjann" target="_blank" rel="noopener" aria-label="GitHub"><i class="mdi mdi-github-circle"></i></a>
+                <a href="mailto:your-email@example.com" aria-label="Email"><i class="mdi mdi-email-outline"></i></a>
+            </div>
+        </div>
+    </footer>
+
+<script src="../assets/js/nepali-date.js?v=20260824.3"></script>
+    <script src="../assets/js/main.js?v=20260824.3"></script>
+</body>
+</html>

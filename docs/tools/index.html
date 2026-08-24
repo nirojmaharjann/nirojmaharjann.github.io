@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tools — Niroj Maharjan</title>
+    <meta name="description" content="Handy utilities: AD ⇄ BS (Bikram Sambat) date converter and an IPv4 pool / subnet calculator.">
+    <script>
+        // Apply saved/system theme before CSS paints (prevents flash)
+        (function () { try {
+            var t = localStorage.getItem('theme') ||
+                (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+            document.documentElement.setAttribute('data-theme', t);
+        } catch (e) {} })();
+    </script>
+    <link rel="shortcut icon" href="../assets/images/favicon.ico" type="image/x-icon">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+
+    <!-- Icons -->
+    <link rel="stylesheet" href="../src/vendors/@mdi/font/css/materialdesignicons.min.css">
+
+    <!-- Portfolio styles -->
+    <link rel="stylesheet" href="../assets/css/portfolio.css?v=20260824.3">
+</head>
+<body>
+
+    <!-- Sticky header: nav + AD/BS clock stay pinned while scrolling -->
+    <header class="site-head">
+
+        <nav class="nav">
+            <div class="container nav-inner">
+                <a class="logo" href="../index.html"><span class="tilde">~/$</span> niroj.maharjan</a>
+                <ul class="nav-links">
+                    <li><a href="../index.html#about"><span class="idx">01.</span>about</a></li>
+                    <li><a href="../index.html#skills"><span class="idx">02.</span>skills</a></li>
+                    <li><a href="../index.html#projects"><span class="idx">03.</span>projects</a></li>
+                    <li><a href="index.html"><span class="idx">04.</span>tools</a></li>
+                    <li><a href="../blog/index.html"><span class="idx">05.</span>blog</a></li>
+                    <li><a href="../index.html#contact"><span class="idx">06.</span>contact</a></li>
+                </ul>
+                <div class="nav-actions">
+                    <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme"></button>
+                    <button class="burger" aria-label="Toggle navigation">&#8801;</button>
+                </div>
+            </div>
+        </nav>
+        <div class="clock-strip">
+            <div class="container clock-inner">
+                <span><i class="mdi mdi-calendar-range"></i> <span id="ad-date">&mdash;</span></span>
+                <span class="sep">|</span>
+                <span><i class="mdi mdi-calendar-text"></i> <span id="bs-date">&mdash;</span></span>
+                <span class="sep">|</span>
+                <span><i class="mdi mdi-clock-outline"></i> <span id="np-time">&mdash;</span></span>
+            </div>
+        </div>
+    </header>
+
+    <!-- ================= Tools ================= -->
+    <section class="section">
+        <div class="container">
+            <p class="section-tag"><span class="accent">#</span> 04 — utilities</p>
+            <h1 class="section-title">tools<span class="cursor-block">&nbsp;</span></h1>
+            <p style="color:var(--muted); max-width:60ch; margin-bottom:34px">
+                Small utilities I keep reaching for — no tracking, runs entirely in your browser.
+            </p>
+
+            <div class="tools-grid">
+
+                <!-- Date converter -->
+                <article class="tool-card reveal">
+                    <h2 class="tool-title"><i class="mdi mdi-swap-horizontal"></i> AD &harr; BS Date Converter</h2>
+
+                    <div class="tool-block">
+                        <h3>AD &rarr; Bikram Sambat</h3>
+                        <div class="tool-row">
+                            <input type="date" id="ad-input" aria-label="AD date to convert">
+                            <button class="btn btn-ghost" id="to-bs-btn">Convert &rarr;</button>
+                        </div>
+                        <p class="result" id="bs-output">&mdash;</p>
+                    </div>
+
+                    <hr class="divider">
+
+                    <div class="tool-block">
+                        <h3>Bikram Sambat &rarr; AD</h3>
+                        <div class="tool-row">
+                            <select id="bs-year" aria-label="BS year"></select>
+                            <select id="bs-month" aria-label="BS month"></select>
+                            <select id="bs-day" aria-label="BS day"></select>
+                            <button class="btn btn-ghost" id="to-ad-btn">Convert &rarr;</button>
+                        </div>
+                        <p class="result" id="ad-output">&mdash;</p>
+                    </div>
+                </article>
+
+                <!-- IP pool calculator -->
+                <article class="tool-card reveal">
+                    <h2 class="tool-title"><i class="mdi mdi-ip-network"></i> IP Pool Calculator</h2>
+
+                    <div class="tool-row">
+                        <input type="text" id="cidr-input" placeholder="e.g. 10.20.4.0/22"
+                               spellcheck="false" autocomplete="off" aria-label="CIDR">
+                        <select id="split-prefix" aria-label="Split into smaller pools">
+                            <option value="">no split</option>
+                            <option>/21</option><option>/22</option><option>/23</option>
+                            <option>/24</option><option>/25</option><option>/26</option>
+                            <option>/27</option><option>/28</option>
+                        </select>
+                        <button class="btn btn-ghost" id="calc-btn">Calculate</button>
+                    </div>
+
+                    <p class="err" id="ip-error" hidden></p>
+                    <dl class="kv" id="ip-summary" hidden></dl>
+
+                    <div id="ip-split-wrap" hidden>
+                        <hr class="divider">
+                        <div class="tool-block">
+                            <h3>Child pools</h3>
+                            <div class="table-wrap">
+                                <table class="table" id="split-table"></table>
+                            </div>
+                            <p style="font-family:var(--mono); font-size:0.78rem; color:var(--muted); margin-top:8px" id="split-more"></p>
+                        </div>
+                    </div>
+                </article>
+
+                <!-- Password generator -->
+                <article class="tool-card reveal" id="password-generator">
+                    <h2 class="tool-title"><i class="mdi mdi-key-variant"></i> Password Generator</h2>
+
+                    <div class="pw-out-row">
+                        <output class="result pw-output mono" id="pw-output" aria-live="polite">&mdash;</output>
+                        <button class="btn btn-ghost" id="pw-copy" aria-label="Copy password to clipboard">
+                            <i class="mdi mdi-content-copy"></i>
+                        </button>
+                    </div>
+
+                    <p class="err" id="pw-error" hidden></p>
+
+                    <div class="tool-block">
+                        <h3>Length &mdash; <span id="pw-len-val">20</span> chars</h3>
+                        <input type="range" id="pw-length" min="8" max="128" value="20"
+                               step="1" aria-label="Password length">
+                    </div>
+
+                    <div class="tool-block">
+                        <h3>Character sets</h3>
+                        <div class="pw-sets">
+                            <label><input type="checkbox" id="pw-upper" checked> Uppercase (A&ndash;Z)</label>
+                            <label><input type="checkbox" id="pw-lower" checked> Lowercase (a&ndash;z)</label>
+                            <label><input type="checkbox" id="pw-num" checked> Numbers (0&ndash;9)</label>
+                            <label><input type="checkbox" id="pw-sym" checked> Symbols (!@#$&hellip;)</label>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-primary pw-generate" id="pw-generate">
+                        <i class="mdi mdi-autorenew"></i> Generate Password
+                    </button>
+
+                    <div class="pw-strength" id="pw-strength">
+                        <span class="bar"><span id="pw-bar"></span></span>
+                        <span id="pw-label">&mdash;</span>
+                    </div>
+                </article>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- ================= Footer ================= -->
+    <footer class="footer">
+        <div class="container footer-inner">
+            <span>&copy; <span id="year">2025</span> niroj.maharjan</span>
+            <div class="socials">
+                <a href="https://github.com/nirojmaharjann" target="_blank" rel="noopener" aria-label="GitHub"><i class="mdi mdi-github-circle"></i></a>
+                <!-- TODO: replace email placeholder with your real address -->
+                <a href="mailto:your-email@example.com" aria-label="Email"><i class="mdi mdi-email"></i></a>
+            </div>
+            <span class="built">built with <span class="accent">&lt;/&gt;</span> and too much coffee</span>
+        </div>
+    </footer>
+
+    <script src="../assets/js/nepali-date.js?v=20260824.3"></script>
+    <script src="../assets/js/tools.js?v=20260824.3"></script>
+    <script src="../assets/js/main.js?v=20260824.3"></script>
+</body>
+</html>
