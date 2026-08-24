@@ -1465,3 +1465,38 @@ a.tool-card { display: flex; flex-direction: column; gap: 10px; text-decoration:
   .pager { flex-direction: column; }
   .pager a.next, .pager a.prev { margin: 0; }
 }
+
+/* ---------- Dockerfile generator: language selector, tabs, validation ---------- */
+.lang-select-wrap { position: relative; }
+.lang-select-wrap > i {
+  position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+  font-size: 1.05rem; color: var(--accent); pointer-events: none;
+}
+.lang-select-wrap select { padding-left: 36px; width: 100%; }
+.field.invalid input, .field.invalid select {
+  border-color: #ff6b6b;
+  box-shadow: 0 0 0 1px rgba(255, 107, 107, 0.35);
+}
+.fmsg { display: block; color: #ff6b6b; font-size: 0.72rem; margin-top: 4px; min-height: 0.9em; }
+
+.tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+.tab {
+  font-family: var(--mono); font-size: 0.78rem; color: var(--muted);
+  background: transparent; border: 1px solid var(--border); border-radius: 8px 8px 0 0;
+  padding: 8px 14px; cursor: pointer; transition: color 0.15s ease, border-color 0.15s ease;
+}
+.tab:hover { color: var(--text); border-color: var(--line-hover); }
+.tab.on {
+  color: var(--accent); border-color: var(--accent);
+  background: var(--panel); border-bottom-color: var(--panel);
+}
+
+.dg-lines { counter-reset: dgl; padding-left: 52px; position: relative; }
+.dgl { display: block; }
+.dgl::before {
+  counter-increment: dgl;
+  content: counter(dgl);
+  position: absolute; left: 0; width: 40px;
+  text-align: right; color: var(--muted); opacity: 0.55;
+  font-size: inherit; user-select: none;
+}

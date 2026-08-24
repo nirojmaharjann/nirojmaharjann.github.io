@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dockerfile generator — DevOps Toolbox</title>
-    <meta name="description" content="Opinionated starter Dockerfiles: pinned bases, layer caching, non-root, healthchecks.">
+    <meta name="description" content="Production Dockerfiles for 12 runtimes: multi-stage, pinned bases, non-root, healthchecks.">
     <script>
         // Apply saved/system theme before CSS paints (prevents flash)
         (function () { try {
@@ -24,7 +24,7 @@
     <link rel="stylesheet" href="../src/vendors/@mdi/font/css/materialdesignicons.min.css">
 
     <!-- Portfolio styles -->
-    <link rel="stylesheet" href="../assets/css/portfolio.css?v=20260824.6">
+    <link rel="stylesheet" href="../assets/css/portfolio.css?v=20260824.7">
 </head>
 <body>
 
@@ -59,7 +59,7 @@
 <p class="crumb"><a href="index.html">toolbox</a><span class="sep">/</span><a href="index.html#docker">Docker</a><span class="sep">/</span><span class="here">dockerfile generator</span></p>
 <div class="tb-head">
     <h1 class="tb-title"><i class="mdi mdi-file-code-outline"></i> Dockerfile generator<span class="cursor-block">&nbsp;</span></h1>
-    <p class="tb-sub">Opinionated starter Dockerfiles: pinned bases, layer caching, non-root, healthchecks.</p>
+    <p class="tb-sub">Production Dockerfiles for 12 runtimes: multi-stage, pinned bases, non-root, healthchecks.</p>
 </div>
 
 <div class="tool-layout">
@@ -67,14 +67,24 @@
 <article class="tool-sec reveal" id="dockerfile_generator">
 <div class="grid3">
                     <div class="field">
-                        <label for="dg-runtime">Runtime / stack</label>
-                        <select id="dg-runtime">
-                            <option value="node">Node.js</option>
-                            <option value="python">Python</option>
-                            <option value="go">Go</option>
-                            <option value="static">Static site (nginx)</option>
-                            <option value="java">Java (JAR)</option>
-                        </select>
+                        <label for="dg-runtime">Language / runtime</label>
+                        <div class="lang-select-wrap">
+                            <i class="mdi mdi-nodejs" id="dg-lang-icon" aria-hidden="true"></i>
+                            <select id="dg-runtime">
+                                <option value="node">Node.js</option>
+                                <option value="python">Python</option>
+                                <option value="go">Go</option>
+                                <option value="java-jar">Java (JAR)</option>
+                                <option value="java-maven">Java (Maven)</option>
+                                <option value="java-gradle">Java (Gradle)</option>
+                                <option value="php">PHP</option>
+                                <option value="ruby">Ruby</option>
+                                <option value="rust">Rust</option>
+                                <option value="dotnet">.NET / C#</option>
+                                <option value="cpp">C / C++</option>
+                                <option value="static">Static site (nginx)</option>
+                            </select>
+                        </div>
                     </div>
                     <div class="field">
                         <label for="dg-port">App port</label>
@@ -92,18 +102,32 @@
                     <button type="button" class="chip on" id="dg-nonroot">non-root USER</button>
                 </div>
 
+                <div id="dg-fields" class="grid3" style="margin-top:16px"></div>
+
+                <p class="err" id="dg-errors" hidden></p>
+
+                <div class="chips" style="margin-top:12px">
+                    <button type="button" class="btn btn-primary" id="dg-generate"><i class="mdi mdi-cog-outline"></i> Generate Dockerfile</button>
+                    <button type="button" class="btn btn-ghost" id="dg-reset"><i class="mdi mdi-restore"></i> reset fields</button>
+                </div>
+
+                <div class="tabs" role="tablist" style="margin-top:20px">
+                    <button type="button" class="tab on" data-tab="dockerfile" role="tab">Dockerfile</button>
+                    <button type="button" class="tab" data-tab="ignore" role="tab">.dockerignore</button>
+                    <button type="button" class="tab" data-tab="compose" role="tab">docker-compose.yml</button>
+                </div>
+
                 <div class="out-bar">
-                    <span><i class="mdi mdi-file-document-outline"></i> Dockerfile</span>
+                    <span><i class="mdi mdi-file-document-outline"></i> <span id="dg-file-label">Dockerfile</span></span>
                     <span class="grow"></span>
                     <button type="button" data-copy-target="dg-out" title="Copy"><i class="mdi mdi-content-copy"></i></button>
                     <button type="button" data-dl-target="dg-out" data-dl-name="Dockerfile" title="Download"><i class="mdi mdi-download"></i></button>
                 </div>
-                <pre class="code-out" id="dg-out"></pre>
-            
+                <pre class="code-out dg-lines" id="dg-out"></pre>
 </article>
 <aside class="about-box reveal">
     <h2><i class="mdi mdi-information-outline"></i> about this tool</h2>
-    <p>Generates a production-shaped Dockerfile for five common stacks. Defaults are opinionated on purpose: pinned base tags keep builds reproducible, dependency layers come before source so cache survives edits, and the non-root USER plus HEALTHCHECK hooks match what most platforms expect at deploy time.</p><p>Toggle the chips to compare a multi-stage build against a single stage &mdash; the size difference is the argument.</p>
+    <p>Configuration-driven Dockerfile generation for twelve runtimes &mdash; Node, Python, Go, three Java flavors, PHP, Ruby, Rust, .NET, C/C++ and static sites. Each language brings its own fields, official base images and .dockerignore; the form adapts the moment you switch.</p><p>Multi-stage builds separate toolchains from runtimes, dependency layers come before source so cache survives edits, and the non-root USER plus HEALTHCHECK hooks match what most platforms expect at deploy time.</p><p>Tabs give you a matching .dockerignore and an optional docker-compose.yml without leaving the page.</p>
     <p class="about-tags"><span class="badge">dockerfile</span> <span class="badge">image</span> <span class="badge">build</span> <span class="badge">multistage</span></p>
 </aside>
 <nav class="pager"><span></span><a class="next" href="compose-generator.html">Compose file generator <i class="mdi mdi-arrow-right"></i></a></nav>
@@ -190,9 +214,9 @@
         </div>
     </footer>
 
-    <script src="../assets/js/tb-lib.js?v=20260824.6"></script>
-    <script src="../assets/js/tb-docker.js?v=20260824.6"></script>
-    <script src="../assets/js/nepali-date.js?v=20260824.6"></script>
-    <script src="../assets/js/main.js?v=20260824.6"></script>
+    <script src="../assets/js/tb-lib.js?v=20260824.7"></script>
+    <script src="../assets/js/tb-docker.js?v=20260824.7"></script>
+    <script src="../assets/js/nepali-date.js?v=20260824.7"></script>
+    <script src="../assets/js/main.js?v=20260824.7"></script>
 </body>
 </html>

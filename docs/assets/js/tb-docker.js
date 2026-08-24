@@ -14,162 +14,702 @@
 
 
 
-  /* ============================================================
-     1. Dockerfile generator
-     ============================================================ */
-  (function () {
+/* ============================================================
+   1. Dockerfile generator (config-driven, multi-language)
+   ============================================================ */
+(function () {
     if (!$('dg-runtime')) return;
 
-  var dgOut = $('dg-out');
-  ['dg-runtime', 'dg-port', 'dg-user'].forEach(function (id) {
-    $(id).addEventListener('input', renderDockerfile);
-  });
-  ['dg-multistage', 'dg-healthcheck', 'dg-nonroot'].forEach(function (id) {
-    $(id).addEventListener('click', function () { $(id).classList.toggle('on'); renderDockerfile(); });
-  });
+    /* ---------- shared template helpers ---------- */
+    function cmdLine(c) { return 'CMD ["/bin/sh", "-c", "' + String(c).replace(/"/g, '\\"') + '"]'; }
+    function entryJava(c) { return 'ENTRYPOINT ["/bin/sh", "-c", "' + String(c).replace(/"/g, '\\"') + '"]'; }
 
-  function healthLine(port) {
-    return 'HEALTHCHECK --interval=30s --timeout=3s \\\n' +
-           '  CMD wget -qO- http://127.0.0.1:' + port + '/healthz || exit 1';
-  }
-
-  function dockerfileTemplate(rt, o) {
-    var P = o.port, U = o.user || 'appuser';
-    switch (rt) {
-      case 'node':
-        if (!o.multi) return [
-          'FROM node:22-alpine',
-          'ENV NODE_ENV=production',
-          'WORKDIR /app',
-          '',
-          'COPY package*.json ./',
-          'RUN npm ci --omit=dev',
-          '',
-          'COPY . .',
-          o.nonroot ? '\nUSER ' + U : '',
-          'EXPOSE ' + P,
-          o.health ? '\n' + healthLine(P) : '',
-          '',
-          'CMD ["node", "server.js"]'
-        ].join('\n').replace(/\n\n+/, '\n\n');
-        return [
-          '# ---- deps ----',
-          'FROM node:22-alpine AS deps',
-          'WORKDIR /app',
-          'COPY package*.json ./',
-          'RUN npm ci --omit=dev',
-          '',
-          '# ---- build ----',
-          'FROM node:22-alpine AS build',
-          'WORKDIR /app',
-          'COPY package*.json ./',
-          'RUN npm ci',
-          'COPY . .',
-          'RUN npm run build',
-          '',
-          '# ---- runtime ----',
-          'FROM node:22-alpine',
-          'ENV NODE_ENV=production',
-          'WORKDIR /app',
-          'COPY --from=deps /app/node_modules ./node_modules',
-          'COPY --from=build /app/dist ./dist',
-          o.nonroot ? '\nUSER ' + U : '',
-          'EXPOSE ' + P,
-          o.health ? '\n' + healthLine(P) : '',
-          '',
-          'CMD ["node", "server.js"]'
-        ].join('\n');
-
-      case 'python':
-        return [
-          'FROM python:3.12-slim',
-          'ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1',
-          'WORKDIR /app',
-          '',
-          'COPY requirements.txt ./',
-          'RUN pip install --no-cache-dir -r requirements.txt',
-          '',
-          'COPY . .',
-          o.nonroot ? '\nRUN useradd -m ' + U + ' && chown -R ' + U + ' /app\nUSER ' + U : '',
-          'EXPOSE ' + P,
-          o.health ? '\nHEALTHCHECK --interval=30s CMD wget -qO- http://127.0.0.1:' + P + '/healthz || exit 1' : '',
-          '',
-          'CMD ["gunicorn", "-b", "0.0.0.0:' + P + '", "app:app"]'
-        ].join('\n');
-
-      case 'go':
-        if (!o.multi) return [
-          'FROM golang:1.23-alpine',
-          'WORKDIR /src',
-          'COPY go.mod go.sum ./',
-          'RUN go mod download',
-          'COPY . .',
-          'RUN CGO_ENABLED=0 go build -ldflags="-s -w" -o /bin/app ./cmd/app',
-          o.nonroot ? '\nUSER nobody' : '',
-          'EXPOSE ' + P,
-          o.health ? '\n' + healthLine(P) : '',
-          '',
-          'CMD ["/bin/app"]'
-        ].join('\n');
-        return [
-          '# ---- build ----',
-          'FROM golang:1.23-alpine AS build',
-          'WORKDIR /src',
-          'COPY go.mod go.sum ./',
-          'RUN go mod download',
-          'COPY . .',
-          'RUN CGO_ENABLED=0 go build -ldflags="-s -w" -o /bin/app ./cmd/app',
-          '',
-          '# ---- runtime ----',
-          'FROM alpine:3.20',
-          'RUN adduser -D -u 10001 ' + U,
-          'COPY --from=build /bin/app /bin/app',
-          'USER ' + U,
-          'EXPOSE ' + P,
-          o.health ? '\nHEALTHCHECK --interval=30s CMD wget -qO- http://127.0.0.1:' + P + '/healthz || exit 1' : '',
-          '',
-          'CMD ["/bin/app"]'
-        ].join('\n');
-
-      case 'static':
-        return [
-          'FROM nginx:1.27-alpine',
-          '',
-          'COPY site/ /usr/share/nginx/html/',
-          'COPY nginx.conf /etc/nginx/conf.d/default.conf',
-          'EXPOSE ' + P,
-          o.health ? '\nHEALTHCHECK --interval=30s CMD wget -qO- http://127.0.0.1:' + P + '/ >/dev/null || exit 1' : ''
-        ].join('\n') + (o.nonroot ? '\n# note: nginx master needs root; workers drop privileges automatically' : '');
-
-      case 'java':
-        return [
-          'FROM eclipse-temurin:21-jre-alpine',
-          'WORKDIR /app',
-          '',
-          'COPY target/app.jar app.jar',
-          o.nonroot ? '\nRUN addgroup -S ' + U + ' && adduser -S ' + U + ' -G ' + U + ' && chown -R ' + U + ' /app\nUSER ' + U : '',
-          'EXPOSE ' + P,
-          o.health ? '\nHEALTHCHECK --interval=30s CMD wget -qO- http://127.0.0.1:' + P + '/actuator/health | grep -q UP || exit 1' : '',
-          '',
-          'ENTRYPOINT ["java", "-jar", "/app/app.jar"]'
-        ].join('\n');
+    function healthWget(port, path) {
+      return 'HEALTHCHECK --interval=30s --timeout=3s --retries=3 \\\n' +
+             '  CMD wget -qO- http://127.0.0.1:' + port + (path || '/healthz') + ' || exit 1';
     }
-    return '';
-  }
+    var APT_WGET = 'RUN apt-get update && apt-get install -y --no-install-recommends wget \\\n    && rm -rf /var/lib/apt/lists/*';
 
-  function renderDockerfile() {
-    var opts = {
-      port: parseInt($('dg-port').value, 10) || 3000,
-      user: $('dg-user').value.trim() || 'appuser',
-      multi: $('dg-multistage').classList.contains('on'),
-      health: $('dg-healthcheck').classList.contains('on'),
-      nonroot: $('dg-nonroot').classList.contains('on')
+    function joinLines(parts) {
+      return parts.filter(function (p) { return p !== null && p !== undefined; })
+                  .join('\n').replace(/\n{3,}/g, '\n\n')
+                  .replace(/^\n+/, '').replace(/\n+$/, '\n');
+    }
+    function nonrootAlpine(u) {
+      return ['RUN addgroup -S ' + u + ' && adduser -S ' + u + ' -G ' + u, 'USER ' + u];
+    }
+
+    function composeFor(o, name, extra) {
+      var l = ['# generated by DevOps Toolbox - review before production',
+               'services:', '  ' + name + ':', '    build: .'];
+      if (extra && extra.image) l.push('    image: ' + extra.image);
+      l.push('    ports:', '      - "' + o.port + ':' + (extra && extra.innerPort ? extra.innerPort : o.port) + '"');
+      l.push('    restart: unless-stopped');
+      if (o.health) {
+        l.push('    healthcheck:',
+               '      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:' + o.port + '/healthz"]',
+               '      interval: 30s', '      timeout: 3s', '      retries: 3');
+      }
+      l.push('');
+      l.push('    # environment:');
+      l.push('    #   - NODE_ENV=production');
+      if (extra && extra.lines) l = l.concat(extra.lines);
+      return l.join('\n');
+    }
+
+    /* ---------- per-language generators ---------- */
+    var DG_LANGS = {
+
+      node: {
+        label: 'Node.js', icon: 'mdi-nodejs',
+        fields: [
+          { id: 'ver',    label: 'Node version', vpat: true, def: '22' },
+          { id: 'pkgmgr', label: 'Package manager', type: 'select', opts: ['npm', 'yarn', 'pnpm'] },
+          { id: 'install',label: 'Install command (override)', ph: 'blank = derived from package manager' },
+          { id: 'build',  label: 'Build command', def: 'npm run build' },
+          { id: 'start',  label: 'Start command', def: 'node dist/server.js', req: true }
+        ],
+        ignore: ['node_modules', 'npm-debug.log', 'yarn-error.log', '.env*', 'Dockerfile', '.dockerignore', 'docker-compose.yml', '.git', '.gitignore', 'coverage/', 'dist/', '*.log'],
+        gen: function (o, g) {
+          var t = g('ver') || '22', pm = g('pkgmgr') || 'npm', P = o.port, U = o.user;
+          var base = 'node:' + t + '-alpine';
+          var lock = pm === 'yarn' ? 'yarn.lock' : pm === 'pnpm' ? 'pnpm-lock.yaml' : 'package-lock.json';
+          var cpLock = pm === 'npm' ? 'COPY package*.json ./' : 'COPY package.json ' + lock + ' ./';
+          var prodI = g('install') || (pm === 'yarn' ? 'yarn install --frozen-lockfile --production'
+                    : pm === 'pnpm' ? 'pnpm install --frozen-lockfile --prod' : 'npm ci --omit=dev');
+          var devI  = g('install') || (pm === 'yarn' ? 'yarn install --frozen-lockfile'
+                    : pm === 'pnpm' ? 'pnpm install --frozen-lockfile' : 'npm ci');
+          var buildC = g('build'), start = g('start');
+          var df;
+          if (o.multi) {
+            df = joinLines([
+              '# ---- dependencies ----',
+              'FROM ' + base + ' AS deps', 'WORKDIR /app', cpLock,
+              pm === 'pnpm' ? 'RUN corepack enable && ' + prodI : 'RUN ' + prodI, '',
+              '# ---- build ----',
+              'FROM ' + base + ' AS build', 'WORKDIR /app', cpLock,
+              pm === 'pnpm' ? 'RUN corepack enable && ' + devI : 'RUN ' + devI,
+              'COPY . .', buildC ? 'RUN ' + buildC : null, '',
+              '# ---- runtime ----',
+              'FROM ' + base, 'ENV NODE_ENV=production', 'WORKDIR /app',
+              'COPY --from=deps /app/node_modules ./node_modules',
+              'COPY --from=build /app .' ].concat(
+              o.nonroot ? nonrootAlpine(U) : [],
+              ['EXPOSE ' + P, o.health ? '' : null, o.health ? healthWget(P) : null, '', cmdLine(start)])
+            );
+          } else {
+            df = joinLines([
+              'FROM ' + base, 'ENV NODE_ENV=production', 'WORKDIR /app', cpLock,
+              pm === 'pnpm' ? 'RUN corepack enable && ' + prodI : 'RUN ' + prodI,
+              'COPY . .'].concat(
+              buildC ? ['', 'RUN ' + buildC] : [],
+              o.nonroot ? [''] : [], o.nonroot ? nonrootAlpine(U) : [],
+              ['', 'EXPOSE ' + P], o.health ? [healthWget(P)] : [],
+              ['', cmdLine(start)]));
+          }
+          return { df: df, compose: composeFor(o, 'app', { image: 'my-node-app:local' }) };
+        }
+      },
+
+      python: {
+        label: 'Python', icon: 'mdi-language-python',
+        fields: [
+          { id: 'ver',   label: 'Python version', vpat: true, def: '3.12' },
+          { id: 'pkgmgr',label: 'Package manager', type: 'select', opts: ['pip', 'poetry', 'uv'] },
+          { id: 'reqs',  label: 'Requirements file', def: 'requirements.txt', ph: 'pip only' },
+          { id: 'start', label: 'Start command', def: 'gunicorn -b 0.0.0.0:8000 app:app', req: true }
+        ],
+        ignore: ['__pycache__/', '*.py[cod]', '.venv/', 'venv/', '*.egg-info/', '.env*', 'Dockerfile', '.dockerignore', 'docker-compose.yml', '.git', '.pytest_cache/', '.mypy_cache/'],
+        gen: function (o, g) {
+          var t = g('ver') || '3.12', pm = g('pkgmgr') || 'pip', P = o.port, U = o.user;
+          var base = 'python:' + t + '-slim';
+          var head = ['FROM ' + base, 'ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1', 'WORKDIR /app'];
+          var deps = [];
+          if (pm === 'pip') {
+            var rf = g('reqs') || 'requirements.txt';
+            deps = ['COPY ' + rf + ' ./', 'RUN pip install --no-cache-dir -r ' + rf];
+          } else if (pm === 'poetry') {
+            deps = ['RUN pip install --no-cache-dir poetry',
+                    'ENV POETRY_VIRTUALENVS_CREATE=false',
+                    'COPY pyproject.toml poetry.lock* ./',
+                    'RUN poetry install --no-root --only main'];
+          } else {
+            deps = ['RUN pip install --no-cache-dir uv',
+                    'COPY pyproject.toml uv.lock* ./',
+                    'RUN uv sync --frozen --no-dev'];
+          }
+          var df = joinLines(head.concat([''], deps, ['', 'COPY . .'],
+            o.nonroot ? ['', 'RUN useradd -m ' + U + ' && chown -R ' + U + ' /app', 'USER ' + U] : [],
+            ['', 'EXPOSE ' + P], o.health ? [healthWget(P)] : [], ['', cmdLine(g('start'))]));
+          return { df: df, compose: composeFor(o, 'app', { image: 'my-python-app:local' }) };
+        }
+      },
+
+      go: {
+        label: 'Go', icon: 'mdi-language-go',
+        fields: [
+          { id: 'ver',   label: 'Go version', vpat: true, def: '1.23' },
+          { id: 'path',  label: 'Main package path', def: './cmd/app', req: true },
+          { id: 'build', label: 'Build command (override)', ph: 'blank = CGO_ENABLED=0 go build' },
+          { id: 'bin',   label: 'Binary name', def: 'app', req: true },
+          { id: 'start', label: 'Start command', ph: 'blank = run the binary directly' }
+        ],
+        ignore: ['bin/', 'vendor/', '*.test', '*.out', '.env*', 'Dockerfile', '.dockerignore', 'docker-compose.yml', '.git'],
+        gen: function (o, g) {
+          var t = g('ver') || '1.23', bin = g('bin') || 'app', P = o.port, U = o.user;
+          var bcmd = g('build') || ('CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o /bin/' + bin + ' ' + (g('path') || './...'));
+          var cmdArr = g('start') ? cmdLine(g('start')) : 'CMD ["/bin/' + bin + '"]';
+          var df;
+          if (o.multi) {
+            df = joinLines([
+              '# ---- build ----',
+              'FROM golang:' + t + '-alpine AS build', 'WORKDIR /src',
+              'COPY go.mod go.sum* ./', 'RUN go mod download', 'COPY . .',
+              'RUN ' + bcmd, '',
+              '# ---- runtime ----',
+              'FROM alpine:3.20', 'RUN apk add --no-cache ca-certificates']
+              .concat(o.health ? ['', 'RUN apk add --no-cache wget'] : [])
+              .concat(nonrootAlpine(U),
+              ['', 'COPY --from=build /bin/' + bin + ' /bin/' + bin,
+               'EXPOSE ' + P], o.health ? [healthWget(P)] : [],
+              ['', cmdArr]));
+          } else {
+            df = joinLines([
+              'FROM golang:' + t + '-alpine', 'WORKDIR /src',
+              'COPY go.mod go.sum* ./', 'RUN go mod download', 'COPY . .',
+              'RUN ' + bcmd]
+              .concat(o.nonroot ? [''] : [], o.nonroot ? nonrootAlpine(U) : [],
+              ['', 'EXPOSE ' + P], o.health ? [healthWget(P)] : [],
+              ['', cmdArr]));
+          }
+          return { df: df, compose: composeFor(o, 'app', { image: 'my-go-app:local' }) };
+        }
+      },
+
+      'java-jar': {
+        label: 'Java (JAR)', icon: 'mdi-coffee',
+        fields: [
+          { id: 'ver',   label: 'Java version', type: 'select', opts: ['21', '17'], def: '21' },
+          { id: 'jar',   label: 'JAR path', def: 'target/app.jar', req: true },
+          { id: 'start', label: 'Start command', def: 'java -jar /app/app.jar', req: true },
+          { id: 'opts',  label: 'JVM options', ph: 'e.g. -XX:MaxRAMPercentage=75' }
+        ],
+        ignore: ['target/', 'build/', '*.class', '.gradle/', '.idea/', '*.iml', 'Dockerfile', '.dockerignore', 'docker-compose.yml', '.git'],
+        gen: function (o, g) {
+          var v = g('ver') || '21', jar = g('jar') || 'app.jar', P = o.port, U = o.user;
+          var jvm = g('opts');
+          var df = joinLines([
+            'FROM eclipse-temurin:' + v + '-jre-alpine', 'WORKDIR /app',
+            'COPY ' + jar + ' app.jar']
+            .concat(jvm ? ['ENV JAVA_OPTS="' + jvm + '"'] : [])
+            .concat(o.nonroot ? [''] : [], o.nonroot ? nonrootAlpine(U) : [],
+            ['', 'EXPOSE ' + P],
+            o.health ? [healthWget(P, '/actuator/health')] : [],
+            ['', entryJava((jvm ? '$JAVA_OPTS ' : '') + g('start'))]));
+          return { df: df, compose: composeFor(o, 'app', { image: 'my-java-app:local' }) };
+        }
+      },
+
+      'java-maven': {
+        label: 'Java (Maven)', icon: 'mdi-coffee-outline',
+        fields: [
+          { id: 'ver',   label: 'Java version', type: 'select', opts: ['21', '17'], def: '21' },
+          { id: 'build', label: 'Build command', def: 'mvn -q -DskipTests package' },
+          { id: 'jar',   label: 'JAR path', def: 'target/app.jar', req: true },
+          { id: 'start', label: 'Start command', def: 'java -jar /app/app.jar', req: true }
+        ],
+        ignore: ['target/', '.mvn/', 'mvnw*', '.idea/', '*.iml', 'Dockerfile', '.dockerignore', 'docker-compose.yml', '.git'],
+        gen: function (o, g) {
+          var v = g('ver') || '21', P = o.port, U = o.user;
+          var df = joinLines([
+            '# ---- build ----',
+            'FROM maven:3.9-eclipse-temurin-' + v + ' AS build', 'WORKDIR /src',
+            'COPY pom.xml ./',
+            'RUN mvn -q -B dependency:go-offline || true',
+            'COPY src ./src', 'RUN ' + (g('build') || 'mvn -q -DskipTests package'), '',
+            '# ---- runtime ----',
+            'FROM eclipse-temurin:' + v + '-jre-alpine', 'WORKDIR /app']
+            .concat(o.nonroot ? nonrootAlpine(U) : [],
+            ['', 'COPY --from=build /src/' + (g('jar') || 'target/app.jar') + ' app.jar',
+             'EXPOSE ' + P],
+            o.health ? [healthWget(P, '/actuator/health')] : [],
+            ['', entryJava(g('start'))]));
+          return { df: df, compose: composeFor(o, 'app', { image: 'my-java-app:local' }) };
+        }
+      },
+
+      'java-gradle': {
+        label: 'Java (Gradle)', icon: 'mdi-coffee-maker',
+        fields: [
+          { id: 'ver',   label: 'Java version', type: 'select', opts: ['21', '17'], def: '21' },
+          { id: 'build', label: 'Build command', def: 'gradle clean bootJar -x test' },
+          { id: 'jar',   label: 'JAR path', def: 'build/libs/app.jar', req: true },
+          { id: 'start', label: 'Start command', def: 'java -jar /app/app.jar', req: true }
+        ],
+        ignore: ['build/', '.gradle/', 'gradle/wrapper/', 'gradlew*', '.idea/', '*.iml', 'Dockerfile', '.dockerignore', 'docker-compose.yml', '.git'],
+        gen: function (o, g) {
+          var v = g('ver') || '21', P = o.port, U = o.user;
+          var df = joinLines([
+            '# ---- build ----',
+            'FROM gradle:8-jdk' + v + ' AS build', 'WORKDIR /src',
+            'COPY build.gradle settings.gradle* ./',
+            'COPY src ./src',
+            'RUN ' + (g('build') || 'gradle clean bootJar -x test'), '',
+            '# ---- runtime ----',
+            'FROM eclipse-temurin:' + v + '-jre-alpine', 'WORKDIR /app']
+            .concat(o.nonroot ? nonrootAlpine(U) : [],
+            ['', 'COPY --from=build /src/' + (g('jar') || 'build/libs/app.jar') + ' app.jar',
+             'EXPOSE ' + P],
+            o.health ? [healthWget(P, '/actuator/health')] : [],
+            ['', entryJava(g('start'))]));
+          return { df: df, compose: composeFor(o, 'app', { image: 'my-java-app:local' }) };
+        }
+      },
+
+      php: {
+        label: 'PHP', icon: 'mdi-language-php',
+        fields: [
+          { id: 'ver',  label: 'PHP version', vpat: true, def: '8.3' },
+          { id: 'mode', label: 'Server mode', type: 'select', opts: ['apache', 'fpm'] },
+          { id: 'composer', label: 'Composer', type: 'select', opts: ['yes', 'no'] },
+          { id: 'docroot', label: 'Document root', def: '/var/www/html/public' }
+        ],
+        ignore: ['vendor/', 'node_modules/', '*.log', '.env*', 'storage/*.key', 'Dockerfile', '.dockerignore', 'docker-compose.yml', '.git'],
+        gen: function (o, g) {
+          var t = g('ver') || '8.3', fpm = (g('mode') || 'apache') === 'fpm';
+          var comp = (g('composer') || 'yes') === 'yes';
+          var P = o.port, U = o.user;
+          var base = 'php:' + t + (fpm ? '-fpm' : '-apache');
+          var l = ['FROM ' + base, 'WORKDIR /var/www/html'];
+          if (comp) l.push('', 'COPY --from=composer:2 /usr/bin/composer /usr/bin/composer',
+                             'COPY composer.json composer.lock* ./',
+                             'RUN composer install --no-dev --optimize-autoloader --no-interaction --no-progress');
+          if (!fpm) {
+            l.push('', 'RUN sed -ri "s/^Listen 80$/Listen ' + P + '/" /etc/apache2/ports.conf',
+                     'ENV APACHE_DOCUMENT_ROOT ' + (g('docroot') || '/var/www/html/public'),
+                     'RUN sed -ri -e \'s!/var/www/html!${APACHE_DOCUMENT_ROOT}!g\' /etc/apache2/sites-available/*.conf /etc/apache2/apache2.conf /etc/php*/apache2/php.ini');
+          } else {
+            l.push('', '# php-fpm serves on 9000; pair with an nginx proxy service (see Compose tab)');
+          }
+          l.push('COPY . .');
+          if (comp) l.push('RUN chown -R www-data:www-data storage bootstrap/cache || true');
+          if (o.nonroot && fpm) l.push('', '# fpm pool runs as www-data by default');
+          if (!fpm && o.nonroot) l.push('', '# note: apache master needs root; workers drop privileges automatically');
+          l.push('', fpm ? 'EXPOSE 9000' : 'EXPOSE ' + P);
+          if (o.health && !fpm) l.push(healthWget(P));
+          if (o.health && fpm) l.push('# HEALTHCHECK: probe your fronting web server instead');
+          return {
+            df: joinLines(l),
+            compose: fpm ?
+              composeFor(o, 'app', { image: 'my-php-app:local', innerPort: '9000', lines: [
+                '',
+                '  nginx:',
+                '    image: nginx:1.27-alpine',
+                '    ports:',
+                '      - "' + o.port + ':80"',
+                '    volumes:',
+                '      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro',
+                '      - .:/var/www/html:ro',
+                '    depends_on:',
+                '      - app',
+                '    restart: unless-stopped'
+              ] }) :
+              composeFor(o, 'app', { image: 'my-php-app:local' })
+          };
+        }
+      },
+
+      ruby: {
+        label: 'Ruby', icon: 'mdi-language-ruby',
+        fields: [
+          { id: 'ver',   label: 'Ruby version', vpat: true, def: '3.3' },
+          { id: 'bundler', label: 'Bundler', type: 'select', opts: ['yes', 'no'] },
+          { id: 'start', label: 'Start command', def: 'bundle exec puma -C config/puma.rb', req: true }
+        ],
+        ignore: ['/vendor/bundle', '*.gem', '.bundle/', 'coverage/', '.env*', 'Dockerfile', '.dockerignore', 'docker-compose.yml', '.git', 'log/*.log', 'tmp/'],
+        gen: function (o, g) {
+          var t = g('ver') || '3.3', bundler = (g('bundler') || 'yes') === 'yes';
+          var P = o.port, U = o.user;
+          var l = ['FROM ruby:' + t + '-slim', 'WORKDIR /app'];
+          if (bundler) {
+            l.push('', 'COPY Gemfile Gemfile.lock* ./',
+                     'RUN bundle config set --local deployment true \\\n    && bundle config set --local without \'development test\' \\\n    && bundle install --jobs 4');
+          }
+          l.push('', 'COPY . .');
+          if (o.nonroot) l.push('', 'RUN useradd -m ' + U + ' && chown -R ' + U + ' /app', 'USER ' + U);
+          l.push('', 'EXPOSE ' + P);
+          if (o.health) l.push(APT_WGET, '', healthWget(P));
+          l.push('', cmdLine(g('start')));
+          return { df: joinLines(l), compose: composeFor(o, 'app', { image: 'my-ruby-app:local' }) };
+        }
+      },
+
+      rust: {
+        label: 'Rust', icon: 'mdi-language-rust',
+        fields: [
+          { id: 'ver',   label: 'Rust version', vpat: true, def: '1.82' },
+          { id: 'bin',   label: 'Binary name', def: 'app', req: true },
+          { id: 'build', label: 'Build command (override)', ph: 'blank = cargo build --release' }
+        ],
+        ignore: ['target/', 'Cargo.lock.orig', '**/*.rs.bk', '.env*', 'Dockerfile', '.dockerignore', 'docker-compose.yml', '.git'],
+        gen: function (o, g) {
+          var t = g('ver') || '1.82', bin = g('bin') || 'app', P = o.port, U = o.user;
+          var bcmd = g('build') || 'cargo build --release';
+          var rtHead = ['FROM debian:bookworm-slim',
+                        'RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates \\',
+                        '    && rm -rf /var/lib/apt/lists/*'];
+          if (o.health) rtHead.push(APT_WGET);
+          var df = joinLines([
+            '# ---- build ----',
+            'FROM rust:' + t + '-slim AS build', 'WORKDIR /src',
+            'COPY Cargo.toml Cargo.lock* ./',
+            'COPY src ./src',
+            'RUN ' + bcmd,
+            '',
+            '# ---- runtime ----']
+            .concat(rtHead)
+            .concat(['', 'COPY --from=build /src/target/release/' + bin + ' /usr/local/bin/' + bin])
+            .concat(o.nonroot ? ['', 'RUN useradd -m ' + U, 'USER ' + U] : [])
+            .concat(['', 'EXPOSE ' + P],
+                    o.health ? [healthWget(P)] : [],
+                    ['', 'CMD ["/usr/local/bin/' + bin + '"]']));
+          return { df: df, compose: composeFor(o, 'app', { image: 'my-rust-app:local' }) };
+        }
+      },
+
+      dotnet: {
+        label: '.NET / C#', icon: 'mdi-dot-net',
+        fields: [
+          { id: 'ver',     label: '.NET version', vpat: true, def: '8.0' },
+          { id: 'proj',    label: 'Project path', def: 'src/App/App.csproj', req: true },
+          { id: 'build',   label: 'Build/publish command (override)', ph: 'blank = dotnet publish -c Release' },
+          { id: 'dll',     label: 'DLL name', def: 'App.dll', req: true },
+          { id: 'assembly',label: 'Assembly / entry DLL path hint', ph: 'optional - shown as comment' }
+        ],
+        ignore: ['bin/', 'obj/', '*.user', 'nuget.config', '.vs/', 'Dockerfile', '.dockerignore', 'docker-compose.yml', '.git'],
+        gen: function (o, g) {
+          var t = g('ver') || '8.0', dll = g('dll') || 'App.dll', proj = g('proj') || '';
+          var P = o.port, U = o.user;
+          var pub = g('build') || ('dotnet publish -c Release -o /app/publish ' + proj);
+          var df = joinLines([
+            '# ---- build ----',
+            'FROM mcr.microsoft.com/dotnet/sdk:' + t + '-alpine AS build', 'WORKDIR /src',
+            'COPY . .',
+            'RUN ' + pub, '',
+            '# ---- runtime ----',
+            'FROM mcr.microsoft.com/dotnet/aspnet:' + t + '-alpine',
+            'WORKDIR /app',
+            'ENV ASPNETCORE_URLS=http://+:' + P, 'ENV DOTNET_EnableDiagnostics=0']
+            .concat(o.nonroot ? nonrootAlpine(U) : [],
+            ['', 'COPY --from=build /app/publish .', 'EXPOSE ' + P],
+            o.health ? [healthWget(P, '/health')] : [],
+            ['', 'ENTRYPOINT ["dotnet", "' + dll + '"]']));
+          return { df: df, compose: composeFor(o, 'app', { image: 'my-dotnet-app:local' }) };
+        }
+      },
+
+      cpp: {
+        label: 'C / C++', icon: 'mdi-code-tags',
+        fields: [
+          { id: 'compiler', label: 'Compiler', type: 'select', opts: ['gcc', 'clang'] },
+          { id: 'base',     label: 'Builder base image', def: '', ph: 'blank = picked from compiler' },
+          { id: 'build',    label: 'Build command', req: true,
+            ph: 'blank = compiler default (-O2 -static)' },
+          { id: 'bin',      label: 'Binary name', def: 'server', req: true }
+        ],
+        ignore: ['bin/', 'build/', 'obj/', '*.o', '*.out', 'CMakeCache.txt', 'cmake-build-*/', 'Dockerfile', '.dockerignore', 'docker-compose.yml', '.git'],
+        gen: function (o, g) {
+          var cc = g('compiler') || 'gcc', bin = g('bin') || 'server', P = o.port, U = o.user;
+          var customBase = g('base');
+          var buildC = g('build') ||
+            (cc === 'clang' ? 'clang++ -O2 -std=c++17 -static -o ' + bin + ' main.cpp'
+                            : 'g++ -O2 -std=c++17 -static -o ' + bin + ' main.cpp');
+          var builder;
+          if (customBase) {
+            builder = ['FROM ' + customBase + ' AS build'];
+          } else if (cc === 'clang') {
+            builder = ['FROM debian:bookworm AS build',
+                       'RUN apt-get update && apt-get install -y --no-install-recommends clang \\',
+                       '    && rm -rf /var/lib/apt/lists/*'];
+          } else {
+            builder = ['FROM gcc:14-bookworm AS build'];
+          }
+          var df = joinLines(builder.concat([
+            'WORKDIR /src',
+            'COPY . .',
+            'RUN ' + buildC,
+            '',
+            '# ---- runtime ----',
+            'FROM debian:bookworm-slim'])
+            .concat(o.health ? [APT_WGET] : [])
+            .concat(['', 'COPY --from=build /src/' + bin + ' /usr/local/bin/' + bin])
+            .concat(o.nonroot ? ['', 'RUN useradd -m ' + U, 'USER ' + U] : [])
+            .concat(['', 'EXPOSE ' + P],
+                    o.health ? [healthWget(P)] : [],
+                    ['', 'CMD ["/usr/local/bin/' + bin + '"]']));
+          return { df: df, compose: composeFor(o, 'app', { image: 'my-cpp-app:local' }) };
+        }
+      },
+
+      static: {
+        label: 'Static site (nginx)', icon: 'mdi-web-box',
+        fields: [
+          { id: 'ver',  label: 'nginx version', vpat: true, def: '1.27' },
+          { id: 'dir',  label: 'Output / build directory', def: 'dist', req: true },
+          { id: 'conf', label: 'Custom nginx conf', ph: 'path e.g. nginx.conf (optional)' }
+        ],
+        ignore: ['node_modules/', 'dist/', '.cache/', '*.log', 'Dockerfile', '.dockerignore', 'docker-compose.yml', '.git'],
+        gen: function (o, g) {
+          var t = g('ver') || '1.27', dir = g('dir') || 'dist', conf = g('conf');
+          var l = ['FROM nginx:' + t + '-alpine', '',
+                   'COPY ' + dir + '/ /usr/share/nginx/html/'];
+          if (conf) l.push('COPY ' + conf + ' /etc/nginx/conf.d/default.conf');
+          l.push('EXPOSE 80');
+          if (o.health) l.push(healthWget(80, '/'));
+          if (o.nonroot) l.push('# note: nginx master needs root; workers drop privileges automatically');
+          return {
+            df: joinLines(l),
+            compose: composeFor(o, 'web', { image: 'my-static-site:local', innerPort: '80' })
+          };
+        }
+      }
     };
-    dgOut.innerHTML = TB.highlight(dockerfileTemplate($('dg-runtime').value, opts), 'dockerfile');
-  }
-  renderDockerfile();
-  })();
 
+    /* ---------- state ---------- */
+    var S = { lang: $('dg-runtime').value || 'node', tab: 'dockerfile',
+              vals: {}, lastGood: null };
+    Object.keys(DG_LANGS).forEach(function (k) {
+      S.vals[k] = { port: $('dg-port').value, user: $('dg-user').value };
+    });
+
+    function langDef() { return DG_LANGS[S.lang]; }
+    function getField(fid) {
+      var fs = langDef().fields;
+      for (var i = 0; i < fs.length; i++) if (fs[i].id === fid) return fs[i];
+      return null;
+    }
+    function getVal(f) {
+      var st = S.vals[S.lang];
+      if (typeof f === 'string') {
+        var def = getField(f);
+        if (!def) return '';
+        return st[f] !== undefined ? st[f] : (def.def !== undefined ? def.def : '');
+      }
+      return st[f.id] !== undefined ? st[f.id] : (f.def !== undefined ? f.def : '');
+    }
+    function setVal(fid, v) { S.vals[S.lang][fid] = v; }
+
+    function defaultsFor(langKey) {
+      var d = {};
+      DG_LANGS[langKey].fields.forEach(function (f) { d[f.id] = f.def !== undefined ? f.def : ''; });
+      return d;
+    }
+
+    /* ---------- dynamic fields ---------- */
+    var fieldsBox = $('dg-fields');
+
+    function makeFieldEl(f) {
+      var wrap = document.createElement('div');
+      wrap.className = 'field';
+      wrap.setAttribute('data-fid', f.id);
+      var lab = document.createElement('label');
+      lab.setAttribute('for', 'dg-f-' + f.id);
+      lab.textContent = f.label;
+      wrap.appendChild(lab);
+      var inp;
+      if (f.type === 'select') {
+        inp = document.createElement('select');
+        f.opts.forEach(function (op) {
+          var oi = document.createElement('option');
+          oi.value = op; oi.textContent = op;
+          inp.appendChild(oi);
+        });
+        inp.value = getVal(f) || f.opts[0];
+      } else {
+        inp = document.createElement('input');
+        inp.type = 'text';
+        inp.spellcheck = false;
+        inp.placeholder = f.ph || '';
+        inp.value = getVal(f);
+      }
+      inp.id = 'dg-f-' + f.id;
+      inp.addEventListener('input', function () {
+        setVal(f.id, inp.value);
+        renderOut();
+      });
+      inp.addEventListener('change', function () {
+        setVal(f.id, inp.value);
+        renderOut();
+      });
+      wrap.appendChild(inp);
+      var msg = document.createElement('span');
+      msg.className = 'fmsg';
+      wrap.appendChild(msg);
+      return wrap;
+    }
+
+    function renderFields() {
+      fieldsBox.innerHTML = '';
+      langDef().fields.forEach(function (f) {
+        fieldsBox.appendChild(makeFieldEl(f));
+      });
+      var icon = $('dg-lang-icon');
+      if (icon) icon.className = 'mdi ' + (langDef().icon || 'mdi-cog-outline');
+      /* restore per-language globals */
+      var st = S.vals[S.lang];
+      $('dg-port').value = st.port;
+      $('dg-user').value = st.user;
+    }
+
+    /* ---------- validation ---------- */
+    var VERSION_RE = /^\d+(\.\d+){0,2}$/;
+
+    function validate() {
+      var errs = [];
+      var port = parseInt($('dg-port').value, 10);
+      if (!$('dg-port').value.trim() || isNaN(port) || port < 1 || port > 65535) {
+        errs.push({ el: $('dg-port'), msg: 'Port must be an integer between 1 and 65535' });
+      }
+      if (!$('dg-user').value.trim()) {
+        errs.push({ el: $('dg-user'), msg: 'Run-as user is required' });
+      }
+      langDef().fields.forEach(function (f) {
+        var v = String(getVal(f)).trim();
+        var box = fieldsBox.querySelector('[data-fid="' + f.id + '"] input,' +
+                                         '[data-fid="' + f.id + '"] select');
+        if (f.req && !v) {
+          errs.push({ el: box, msg: f.label + ' is required' });
+        } else if (v && f.vpat && !VERSION_RE.test(v)) {
+          errs.push({ el: box, msg: f.label + ' looks invalid (use digits like 22 or 3.12)' });
+        } else if (v && f.vpat && /(^|\.)0\d/.test(v)) {
+          errs.push({ el: box, msg: f.label + ' must not have leading zeros' });
+        }
+      });
+      return errs;
+    }
+
+    function paintErrors(errs) {
+      var box = $('dg-errors');
+      fieldsBox.querySelectorAll('.field').forEach(function (el) {
+        el.classList.remove('invalid');
+        var m = el.querySelector('.fmsg');
+        if (m) m.textContent = '';
+      });
+      [$('dg-port'), $('dg-user')].forEach(function (el) { el.classList.remove('invalid'); });
+      if (!errs.length) { box.hidden = true; box.textContent = ''; return; }
+      errs.forEach(function (e) {
+        if (e.el) {
+          var host = e.el.closest('.field') || e.el.parentElement;
+          if (host) {
+            host.classList.add('invalid');
+            var m = host.querySelector('.fmsg');
+            if (m) m.textContent = e.msg;
+          }
+        }
+      });
+      box.textContent = errs.length + ' configuration problem' +
+        (errs.length > 1 ? 's' : '') + ': ' +
+        errs.map(function (e) { return e.msg; }).join('; ') +
+        '. Preview keeps the last valid result.';
+      box.hidden = false;
+    }
+
+    /* ---------- artifact rendering ---------- */
+    var TAB_META = {
+      dockerfile: { label: 'Dockerfile', file: 'Dockerfile', hl: 'dockerfile' },
+      ignore:     { label: '.dockerignore', file: '.dockerignore', hl: 'plain' },
+      compose:    { label: 'docker-compose.yml', file: 'docker-compose.yml', hl: 'yaml' }
+    };
+
+    function buildArtifacts() {
+      var ctx = {
+        port: parseInt($('dg-port').value, 10) || 80,
+        user: $('dg-user').value.trim() || 'appuser',
+        multi: $('dg-multistage').classList.contains('on'),
+        health: $('dg-healthcheck').classList.contains('on'),
+        nonroot: $('dg-nonroot').classList.contains('on')
+      };
+      var r = langDef().gen(ctx, getVal);
+      r.ignore = (langDef().ignore || []).join('\n');
+      return r;
+    }
+
+    function withLineNumbers(html) {
+      return html.split('\n').map(function (l) {
+        return '<span class="dgl">' + l + '</span>';
+      }).join('\n');
+    }
+
+    function paintTab() {
+      if (!S.lastGood) return;
+      var meta = TAB_META[S.tab];
+      var raw = S.tab === 'ignore' ? S.lastGood.ignore : S.lastGood.compose;
+      var html;
+      if (S.tab === 'dockerfile') html = TB.highlight(S.lastGood.df, 'dockerfile');
+      else if (S.tab === 'compose') html = TB.highlight(raw, 'yaml');
+      else html = TB.esc(raw);
+      $('dg-out').innerHTML = withLineNumbers(html);
+      var lbl = $('dg-file-label');
+      if (lbl) lbl.textContent = meta.label;
+      var dl = document.querySelector('[data-dl-target="dg-out"]');
+      if (dl) dl.setAttribute('data-dl-name', meta.file);
+    }
+
+    var renderOut = function () {
+      var errs = validate();
+      paintErrors(errs);
+      if (!errs.length) S.lastGood = buildArtifacts();
+      paintTab();
+    };
+    /* ---------- wiring ---------- */
+    ['dg-runtime', 'dg-port', 'dg-user'].forEach(function (id) {
+      $(id).addEventListener('input', function () {
+        if (id === 'dg-runtime') {
+          S.lang = $(id).value;
+          if (!S.vals[S.lang]) {
+            S.vals[S.lang] = defaultsFor(S.lang);
+            S.vals[S.lang].port = $('dg-port').value;
+            S.vals[S.lang].user = $('dg-user').value;
+          }
+          renderFields();
+        } else {
+          S.vals[S.lang][id === 'dg-port' ? 'port' : 'user'] = $(id).value;
+        }
+        renderOut();
+      });
+    });
+    ['dg-multistage', 'dg-healthcheck', 'dg-nonroot'].forEach(function (id) {
+      $(id).addEventListener('click', function () {
+        $(id).classList.toggle('on');
+        renderOut();
+      });
+    });
+
+    document.querySelectorAll('.tab[data-tab]').forEach(function (t) {
+      if (!t.closest('#dockerfile_generator')) return;
+      t.addEventListener('click', function () {
+        document.querySelectorAll('.tab[data-tab]').forEach(function (x) {
+          x.classList.toggle('on', x === t);
+        });
+        S.tab = t.getAttribute('data-tab');
+        paintTab();
+      });
+    });
+
+    $('dg-generate').addEventListener('click', renderOut);
+
+    $('dg-reset').addEventListener('click', function () {
+      var d = defaultsFor(S.lang);
+      d.port = '3000';
+      d.user = 'appuser';
+      S.vals[S.lang] = d;
+      renderFields();
+      renderOut();
+    });
+
+    renderFields();
+    renderOut();
+  })();
 
   /* ============================================================
      2. Compose file generator
