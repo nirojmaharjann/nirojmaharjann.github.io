@@ -24,7 +24,7 @@
     <link rel="stylesheet" href="../src/vendors/@mdi/font/css/materialdesignicons.min.css">
 
     <!-- Portfolio styles -->
-    <link rel="stylesheet" href="../assets/css/portfolio.css?v=20260824.9">
+    <link rel="stylesheet" href="../assets/css/portfolio.css?v=20260824.10">
 </head>
 <body>
 
@@ -86,7 +86,6 @@
                     <label class="res-chip"><input type="checkbox" id="kg-res-ingress"><i class="mdi mdi-door-open"></i> Ingress</label>
                     <label class="res-chip"><input type="checkbox" id="kg-res-configmap"><i class="mdi mdi-script-text-outline"></i> ConfigMap</label>
                     <label class="res-chip"><input type="checkbox" id="kg-res-secret"><i class="mdi mdi-key-variant"></i> Secret</label>
-                    <label class="res-chip"><input type="checkbox" id="kg-res-tls"><i class="mdi mdi-lock-outline"></i> SSL / TLS</label>
                     <label class="res-chip"><input type="checkbox" id="kg-res-hpa"><i class="mdi mdi-arrow-expand-vertical"></i> HPA</label>
                     <label class="res-chip"><input type="checkbox" id="kg-res-namespace"><i class="mdi mdi-tag-outline"></i> Namespace</label>
                     <label class="res-chip"><input type="checkbox" id="kg-res-pvc"><i class="mdi mdi-database-outline"></i> PVC</label>
@@ -94,6 +93,17 @@
                 <div class="res-actions">
                     <button type="button" class="btn-ghost" id="kg-all"><i class="mdi mdi-checkbox-multiple-marked-outline"></i> Select all</button>
                     <button type="button" class="btn-ghost" id="kg-none"><i class="mdi mdi-close-box-multiple-outline"></i> Clear all</button>
+                </div>
+
+                <div class="tls-toggle" id="kg-tls-toggle" role="group" aria-label="SSL / TLS">
+                    <span class="tt-info">
+                        <span class="tt-title"><i class="mdi mdi-lock-outline"></i> SSL / TLS</span>
+                        <span class="tt-sub">HTTPS for the Ingress &mdash; reference a secret or use cert-manager</span>
+                    </span>
+                    <span class="seg">
+                        <button type="button" class="seg-btn on" id="kg-tls-off" aria-pressed="true">Disabled</button>
+                        <button type="button" class="seg-btn" id="kg-tls-on" aria-pressed="false">Enabled</button>
+                    </span>
                 </div>
 
                 <div id="kg-fields"></div>
@@ -197,15 +207,15 @@
             <div class="socials">
                 <a href="https://github.com/nirojmaharjann" target="_blank" rel="noopener" aria-label="GitHub"><i class="mdi mdi-github-circle"></i></a>
                 <!-- TODO: replace email placeholder with your real address -->
-                <a href="mailto:niroj.maharjan@nirojmaharjan.info.np" aria-label="Email" title="Email"><i class="mdi mdi-email"></i></a>
+                <a href="mailto:niroj.maharjan@nirojmaharjan.info.np?subject=Contact%20%2F%20Feedback" aria-label="Email us" title="Email us"><i class="mdi mdi-email"></i></a>
             </div>
             <span class="built">built with <span class="accent">&lt;/&gt;</span> and too much coffee</span>
         </div>
     </footer>
 
-    <script src="../assets/js/tb-lib.js?v=20260824.9"></script>
-    <script src="../assets/js/tb-k8s.js?v=20260824.9"></script>
-    <script src="../assets/js/nepali-date.js?v=20260824.9"></script>
-    <script src="../assets/js/main.js?v=20260824.9"></script>
+    <script src="../assets/js/tb-lib.js?v=20260824.10"></script>
+    <script src="../assets/js/tb-k8s.js?v=20260824.10"></script>
+    <script src="../assets/js/nepali-date.js?v=20260824.10"></script>
+    <script src="../assets/js/main.js?v=20260824.10"></script>
 </body>
 </html>

@@ -24,7 +24,7 @@
     <link rel="stylesheet" href="../src/vendors/@mdi/font/css/materialdesignicons.min.css">
 
     <!-- Portfolio styles -->
-    <link rel="stylesheet" href="../assets/css/portfolio.css?v=20260824.9">
+    <link rel="stylesheet" href="../assets/css/portfolio.css?v=20260824.10">
 </head>
 <body>
 
@@ -67,11 +67,11 @@
 <article class="tool-sec reveal" id="base64_url_codec">
 <textarea class="code-in" id="en-in" spellcheck="false"
                           placeholder="Text or encoded string&hellip;"></textarea>
-                <div class="chips">
-                    <button type="button" class="btn btn-ghost" id="en-b64enc">base64 &rarr; encode</button>
-                    <button type="button" class="btn btn-ghost" id="en-b64dec">base64 &rarr; decode</button>
-                    <button type="button" class="btn btn-ghost" id="en-urlenc">URL &rarr; encode</button>
-                    <button type="button" class="btn btn-ghost" id="en-urldec">URL &rarr; decode</button>
+                <div class="tabs" id="en-ops" role="tablist" aria-label="Codec operation">
+                    <button type="button" class="tab on" id="en-b64enc" data-op="b64enc" role="tab" aria-selected="true">Base64 Encode</button>
+                    <button type="button" class="tab" id="en-b64dec" data-op="b64dec" role="tab" aria-selected="false">Base64 Decode</button>
+                    <button type="button" class="tab" id="en-urlenc" data-op="urlenc" role="tab" aria-selected="false">URL Encode</button>
+                    <button type="button" class="tab" id="en-urldec" data-op="urldec" role="tab" aria-selected="false">URL Decode</button>
                 </div>
                 <p class="err" id="en-error" hidden></p>
                 <pre class="code-out" id="en-out">// output appears here</pre>
@@ -160,15 +160,15 @@
             <div class="socials">
                 <a href="https://github.com/nirojmaharjann" target="_blank" rel="noopener" aria-label="GitHub"><i class="mdi mdi-github-circle"></i></a>
                 <!-- TODO: replace email placeholder with your real address -->
-                <a href="mailto:niroj.maharjan@nirojmaharjan.info.np" aria-label="Email" title="Email"><i class="mdi mdi-email"></i></a>
+                <a href="mailto:niroj.maharjan@nirojmaharjan.info.np?subject=Contact%20%2F%20Feedback" aria-label="Email us" title="Email us"><i class="mdi mdi-email"></i></a>
             </div>
             <span class="built">built with <span class="accent">&lt;/&gt;</span> and too much coffee</span>
         </div>
     </footer>
 
-    <script src="../assets/js/tb-lib.js?v=20260824.9"></script>
-    <script src="../assets/js/tb-utils.js?v=20260824.9"></script>
-    <script src="../assets/js/nepali-date.js?v=20260824.9"></script>
-    <script src="../assets/js/main.js?v=20260824.9"></script>
+    <script src="../assets/js/tb-lib.js?v=20260824.10"></script>
+    <script src="../assets/js/tb-utils.js?v=20260824.10"></script>
+    <script src="../assets/js/nepali-date.js?v=20260824.10"></script>
+    <script src="../assets/js/main.js?v=20260824.10"></script>
 </body>
 </html>

@@ -302,30 +302,42 @@ function b64encode(str) {
       $('en-out').textContent = '// output appears here';
     }
 
-    $('en-b64enc').addEventListener('click', function () {
+    /* single source of truth for the selected operation */
+    var EN_OP = 'b64enc';
+
+    function runCodec() {
       var raw = $('en-in').value;
       if (!raw) return;
-      try { ok(b64encode(raw)); } catch (e) { fail('encode failed: ' + e.message); }
+      try {
+        if (EN_OP === 'b64enc') ok(b64encode(raw));
+        else if (EN_OP === 'b64dec') ok(b64decode(raw));
+        else if (EN_OP === 'urlenc') ok(encodeURIComponent(raw));
+        else ok(decodeURIComponent(raw.replace(/\+/g, ' ')));
+      } catch (e) {
+        if (EN_OP === 'b64dec') fail('invalid base64 input');
+        else if (EN_OP === 'urldec') fail('invalid URL encoding');
+        else fail('encode failed: ' + e.message);
+      }
+    }
+
+    /* segmented control: exactly one active op, styling follows state */
+    $('en-ops').addEventListener('click', function (ev) {
+      var btn = ev.target.closest('.tab');
+      if (!btn) return;
+      var op = btn.getAttribute('data-op');
+      if (op !== EN_OP) {
+        EN_OP = op;
+        this.querySelectorAll('.tab').forEach(function (b) {
+          var on = b.getAttribute('data-op') === EN_OP;
+          b.classList.toggle('on', on);
+          b.setAttribute('aria-selected', on ? 'true' : 'false');
+        });
+      }
+      /* clicking the active tab re-runs too */
+      runCodec();
     });
 
-    $('en-b64dec').addEventListener('click', function () {
-      var raw = $('en-in').value;
-      if (!raw) return;
-      try { ok(b64decode(raw)); } catch (e) { fail('invalid base64 input'); }
-    });
-
-    $('en-urlenc').addEventListener('click', function () {
-      var raw = $('en-in').value;
-      if (!raw) return;
-      try { ok(encodeURIComponent(raw)); } catch (e) { fail('encode failed: ' + e.message); }
-    });
-
-    $('en-urldec').addEventListener('click', function () {
-      var raw = $('en-in').value;
-      if (!raw) return;
-      try { ok(decodeURIComponent(raw.replace(/\+/g, ' '))); }
-      catch (e) { fail('invalid URL encoding'); }
-    });
+    $('en-in').addEventListener('input', runCodec);
   })();
 
 

@@ -978,9 +978,11 @@
 
     function syncResourceChecks() {
       RES_ORDER.forEach(function (rid) {
+        if (rid === 'tls') return;
         var cb = $(rid === 'service' ? 'kd-svc' : 'kg-res-' + rid);
         if (cb) cb.checked = sel(rid);
       });
+      syncTlsSeg();
     }
 
     /* ---------- events ---------- */
@@ -1076,6 +1078,7 @@
     });
 
     RES_ORDER.forEach(function (rid) {
+      if (rid === 'tls') return; /* driven by the segmented SSL/TLS toggle */
       var cb = $(rid === 'service' ? 'kd-svc' : 'kg-res-' + rid);
       if (!cb) return;
       cb.addEventListener('change', function () {
@@ -1098,6 +1101,36 @@
       syncResourceChecks();
       renderCards();
       paint();
+    });
+
+
+    /* SSL/TLS segmented control - app state is the single source of truth.
+       Clicking a segment applies that exact state; clicking anywhere else on
+       the card flips to the opposite state. No checkbox involved. */
+    function setTlsEnabled(on) {
+      if (sel('tls') === on) return;
+      S.res.tls = on;
+      if (!on && S.tab === 'tls') S.tab = 'all';
+      syncTlsSeg();
+      renderCards();
+      paint();
+    }
+    function syncTlsSeg() {
+      var on = sel('tls');
+      var bOn = $('kg-tls-on'), bOff = $('kg-tls-off');
+      if (bOn) {
+        bOn.classList.toggle('on', on);
+        bOn.setAttribute('aria-pressed', on ? 'true' : 'false');
+      }
+      if (bOff) {
+        bOff.classList.toggle('on', !on);
+        bOff.setAttribute('aria-pressed', !on ? 'true' : 'false');
+      }
+    }
+    $('kg-tls-toggle').addEventListener('click', function (ev) {
+      var btn = ev.target.closest('.seg-btn');
+      if (btn) setTlsEnabled(btn.id === 'kg-tls-on');
+      else setTlsEnabled(!sel('tls'));
     });
 
     $('kg-preset').addEventListener('change', function () {
